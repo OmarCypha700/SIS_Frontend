@@ -1,36 +1,73 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
+# Core SIS — Frontend (Next.js)
 
-## Getting Started
+Web interface for the School Management System: student records, academic structure, course
+registration, results and administration. JavaScript only (no TypeScript), Next.js App Router,
+Tailwind CSS, shadcn/ui (Radix), React Hook Form + Zod, Axios, Sonner and Recharts.
 
-First, run the development server:
+The API is the sibling **SIS Backend** project (Django). Architecture, security, API and
+deployment documentation live in `../SIS Backend/docs/`.
+
+## How it talks to the API
+
+The browser only calls this app. `next.config.mjs` rewrites `/api/*` and `/media/*` to the Django
+server named by `BACKEND_URL`, so Django's HTTP-only session cookie and CSRF cookie are
+first-party cookies here. All requests go through one Axios client (`lib/api.js`), which sends the
+`X-CSRFToken` header and sends users to the sign-in page when their session ends.
+
+`proxy.js` redirects visitors without a session cookie to `/login`. This is only a convenience;
+every permission is enforced by the API.
+
+## Run locally
+
+Prerequisites: Node.js 20+ and the backend running on http://127.0.0.1:8000 (see its README).
 
 ```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
+npm install
+cp .env.example .env.local     # optional: only needed if the backend is not on 127.0.0.1:8000
+npm run dev                    # http://localhost:3000
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+Sign in with the demo accounts listed in the backend README (after `python manage.py seed_demo`).
 
-You can start editing the page by modifying `app/page.js`. The page auto-updates as you edit the file.
+| Variable | Purpose | Default |
+|---|---|---|
+| `BACKEND_URL` | Django base URL for the rewrites (read at build time) | `http://127.0.0.1:8000` |
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## Scripts
 
-## Learn More
+```bash
+npm run dev          # development server
+npm run build        # production build
+npm start            # serve the production build
+npm run lint         # ESLint
+npx playwright test  # end-to-end tests (starts its own seeded backend and frontend)
+```
 
-To learn more about Next.js, take a look at the following resources:
+End-to-end tests need the backend's virtual environment in `../SIS Backend/.venv`
+(or set `SIS_BACKEND_DIR` / `SIS_PYTHON`). First run: `npx playwright install chromium`.
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## Structure
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+```
+app/(auth)/          login, forgot-password, reset-password
+app/(dashboard)/     signed-in pages inside the application shell
+  dashboard/         role-specific dashboard
+  students/          list, new, [id] (profile, history, registrations, academic record), edit, import, transcript
+  academics/         periods, departments, levels, programmes (+ curriculum), courses, offerings (+ lecturers, class list)
+  registration/      student course selection → review → confirmation, history, slip
+  registrations/     registry overview, detail/approval, not registered, register on behalf
+  results/           lecturer courses, marks entry and workflow, result sheets, amendments
+  my-results/        student results, slips, academic record
+  settings/          institution, staff accounts, grading schemes
+  audit/             audit log
+components/          shell, data table, forms, shared UI, domain components; ui/ = shadcn primitives
+hooks/use-api.js     small data-fetching hook
+lib/                 API client, navigation, formatting, option lists
+tests/e2e/           Playwright tests
+```
 
-## Deploy on Vercel
+## Deploying
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+See `../SIS Backend/docs/deployment.md` (section "Frontend on Vercel"). Set `BACKEND_URL` to the
+HTTPS address of the Django API before building, and add this site's origin to the backend's
+`CSRF_TRUSTED_ORIGINS`.
