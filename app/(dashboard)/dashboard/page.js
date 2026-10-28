@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {
-  AlertTriangle, BookOpen, CalendarClock, CheckCircle2, ClipboardCheck, FilePen, GraduationCap, ListChecks, Users,
+  AlertTriangle, BookOpen, CalendarClock, CheckCircle2, ClipboardCheck, FilePen, GraduationCap, ListChecks, Mail, Users,
 } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
@@ -25,6 +25,7 @@ export default function DashboardPage() {
       {loading && !data && <LoadingBlock rows={6} />}
       {error && <ErrorState error={error} onRetry={reload} />}
       {data?.kind === "registry" && <RegistryDashboard data={data} />}
+      {user.role === "ADMIN" && <DeliveryCard />}
       {data?.kind === "results_officer" && <OfficerDashboard data={data} />}
       {data?.kind === "lecturer" && <LecturerDashboard data={data} />}
       {data?.kind === "student" && <StudentDashboard data={data} />}
@@ -69,6 +70,50 @@ function SemesterCard({ semester }) {
             </div>
           ))}
         </dl>
+      </CardContent>
+    </Card>
+  );
+}
+
+/** Administrators: how much of today's email allowance is used and whether push is set up. */
+function DeliveryCard() {
+  const { data } = useApi("/notifications/delivery-status/");
+  if (!data) return null;
+  const { email, push } = data;
+  const used = email.limit ? Math.min(100, Math.round((email.sent_today / email.limit) * 100)) : 0;
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <Mail className="size-5" /> Notification delivery
+        </CardTitle>
+        <CardDescription>
+          Email uses the daily allowance of your email provider ({email.limit} per day, {email.security_reserve} kept for
+          password resets). Push notifications and in-app notifications are unlimited.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="grid gap-6 sm:grid-cols-3">
+        <div className="space-y-2">
+          <p className="text-sm text-muted-foreground">Email sent today</p>
+          <p className="text-2xl font-semibold tabular-nums">
+            {email.sent_today} <span className="text-base font-normal text-muted-foreground">/ {email.limit}</span>
+          </p>
+          <Progress value={used} aria-label="Share of today's email allowance used" />
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground">Email waiting</p>
+          <p className="text-2xl font-semibold tabular-nums">{email.pending}</p>
+          <p className="text-xs text-muted-foreground">
+            {email.failed_last_7_days ? `${email.failed_last_7_days} failed in the last 7 days` : "No failures in the last 7 days"}
+          </p>
+        </div>
+        <div className="space-y-1">
+          <p className="text-sm text-muted-foreground">Devices with push</p>
+          <p className="text-2xl font-semibold tabular-nums">{push.enabled ? push.devices : "Off"}</p>
+          <p className="text-xs text-muted-foreground">
+            {push.enabled ? `${push.pending} waiting to be sent` : "Set the VAPID keys on the server to turn push on"}
+          </p>
+        </div>
       </CardContent>
     </Card>
   );

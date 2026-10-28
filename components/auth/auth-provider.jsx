@@ -4,6 +4,7 @@ import { createContext, useCallback, useContext, useEffect, useMemo, useState } 
 import { usePathname, useRouter } from "next/navigation";
 
 import { api } from "@/lib/api";
+import { forgetDevice } from "@/lib/push";
 
 const AuthContext = createContext(null);
 
@@ -47,6 +48,8 @@ export function AuthProvider({ children, initial }) {
 
   const logout = useCallback(async () => {
     try {
+      // Before the session ends: stop this device receiving this person's notifications.
+      await forgetDevice();
       await api.post("/auth/logout/");
     } finally {
       // Full navigation so no signed-in state survives in memory.

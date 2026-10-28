@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { hasRole, useAuth } from "@/components/auth/auth-provider";
 import { DescriptionList, PageHeader } from "@/components/common";
 import { Field } from "@/components/forms/field";
+import { NotificationSettings } from "@/components/notifications/notification-settings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
@@ -47,6 +48,7 @@ export default function ProfilePage() {
         </CardContent>
       </Card>
       {hasRole(user, "STUDENT") ? <StudentContact /> : <StaffContact user={user} onSaved={reload} />}
+      <NotificationSettings />
       <PasswordCard onChanged={reload} />
     </div>
   );

@@ -2,15 +2,17 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { KeyRound, Loader2, Power, Upload } from "lucide-react";
+import { KeyRound, Loader2, Power, PowerOff, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog, StatusBadge } from "@/components/common";
 import { Field } from "@/components/forms/field";
 import { ResourcePage } from "@/components/resource-page";
+import { BulkActions } from "@/components/tables/bulk-actions";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { DropdownMenuItem } from "@/components/ui/dropdown-menu";
+import { DeleteRecordDialog } from "@/components/delete-record-dialog";
+import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { api, errorMessage, fieldErrors } from "@/lib/api";
 import { formatDateTime, ROLE_LABELS } from "@/lib/format";
@@ -57,6 +59,35 @@ const COLUMNS = [
   { key: "is_active", header: "Status", cell: (r) => <StatusBadge status={r.is_active ? "ACTIVE" : "SUSPENDED"} label={r.is_active ? "Active" : "Disabled"} /> },
 ];
 
+const accounts = (n) => `${n} account${n === 1 ? "" : "s"}`;
+
+const STAFF_BULK_ACTIONS = [
+  {
+    value: "deactivate",
+    label: "Disable",
+    icon: PowerOff,
+    confirm: (n) => `${accounts(n)} will be unable to sign in. Their history is kept and this can be undone.`,
+    done: (n) => `${accounts(n)} disabled.`,
+  },
+  {
+    value: "activate",
+    label: "Enable",
+    icon: Power,
+    confirm: (n) => `${accounts(n)} will be able to sign in again.`,
+    done: (n) => `${accounts(n)} enabled.`,
+  },
+  {
+    value: "delete",
+    label: "Delete",
+    icon: Trash2,
+    destructive: true,
+    confirm: (n) =>
+      `Permanently delete ${accounts(n)} created in error. Accounts that have signed in, taught a course or done ` +
+      "anything recorded in the audit log are skipped and should be disabled instead.",
+    done: (n) => `${accounts(n)} deleted.`,
+  },
+];
+
 function withoutBlankPassword(payload) {
   const { password, ...rest } = payload;
   return password ? payload : rest;
@@ -66,11 +97,12 @@ export default function UsersPage() {
   const [toggling, setToggling] = useState(null);
   const [passwordFor, setPasswordFor] = useState(null);
   const [refreshPage, setRefreshPage] = useState(0);
+  const [selected, setSelected] = useState([]);
+  const [deleting, setDeleting] = useState(null);
 
   return (
     <>
       <ResourcePage
-        key={refreshPage}
         title="Staff accounts"
         description="Create staff accounts, assign roles and grant result permissions. Student accounts are created from student records."
         endpoint="/users/"
@@ -81,6 +113,13 @@ export default function UsersPage() {
         readRoles={["ADMIN"]}
         writeRoles={["ADMIN"]}
         allowDelete={false}
+        refreshKey={refreshPage}
+        tableProps={{
+          selectable: true,
+          selectedIds: selected,
+          onSelectionChange: setSelected,
+          rowLabel: (row) => row.full_name,
+        }}
         filters={[
           { key: "role", label: "Role", options: ROLE_OPTIONS },
           { key: "is_active", label: "Status", options: [{ value: "true", label: "Active" }, { value: "false", label: "Disabled" }] },
@@ -100,6 +139,10 @@ export default function UsersPage() {
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setToggling(row)}>
               <Power /> {row.is_active ? "Disable account" : "Enable account"}
+            </DropdownMenuItem>
+            <DropdownMenuSeparator />
+            <DropdownMenuItem variant="destructive" onSelect={() => setDeleting(row)}>
+              <Trash2 /> Delete account created in error
             </DropdownMenuItem>
           </>
         )}
@@ -125,6 +168,29 @@ export default function UsersPage() {
         }}
       />
       {passwordFor && <SetPasswordDialog user={passwordFor} onClose={() => setPasswordFor(null)} />}
+      {deleting && (
+        <DeleteRecordDialog
+          name={deleting.full_name}
+          noun="account"
+          endpoint={`/users/${deleting.id}/`}
+          onClose={() => setDeleting(null)}
+          onDeleted={() => {
+            setSelected((ids) => ids.filter((id) => id !== deleting.id));
+            setRefreshPage((n) => n + 1);
+          }}
+        />
+      )}
+      <BulkActions
+        endpoint="/users/bulk/"
+        noun="account"
+        selectedIds={selected}
+        onClear={() => setSelected([])}
+        onDone={(stillSelected) => {
+          setSelected(stillSelected);
+          setRefreshPage((n) => n + 1);
+        }}
+        actions={STAFF_BULK_ACTIONS}
+      />
     </>
   );
 }

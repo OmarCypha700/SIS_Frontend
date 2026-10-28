@@ -36,7 +36,7 @@ test("administrator creates a student and sees validation errors", async ({ page
 
   await open(page, "/students");
   await page.getByLabel("Search").fill("Testfield");
-  await expect(page.getByRole("cell", { name: "Esi Testfield" })).toBeVisible();
+  await expect(page.getByRole("cell", { name: "Esi Testfield", exact: true })).toBeVisible();
 });
 
 test("student registers for courses and gets a slip", async ({ page }) => {
@@ -91,9 +91,20 @@ test("marks are entered, approved, published and seen by the student", async ({ 
   });
   expect(forbidden.status()).toBe(403);
 
-  // Results officer approves.
+  // The results officer is notified: the bell shows the submission and opens the sheet.
   await login(page, ACCOUNTS.officer);
-  await open(page, `/results/sheets/${sheetId}`);
+  const bell = page.getByRole("button", { name: /^Notifications/ });
+  await expect(bell).toHaveAccessibleName(/unread/);
+  const before = Number(await page.getByTestId("unread-count").textContent());
+  await bell.click();
+  await page.getByRole("button", { name: /Results submitted for ITC101/ }).first().click();
+  await expect(page).toHaveURL(new RegExp(`/results/sheets/${sheetId}$`));
+  await expect
+    .poll(async () => Number((await page.getByTestId("unread-count").textContent({ timeout: 1000 }).catch(() => "0")) || 0))
+    .toBe(before - 1);
+  await page.waitForLoadState("networkidle");
+
+  // Results officer approves.
   await page.getByRole("button", { name: "Approve" }).click();
   await page.getByRole("alertdialog").getByRole("button", { name: "Approve" }).click();
   await expect(page.getByText("Results approved.")).toBeVisible();
@@ -108,6 +119,9 @@ test("marks are entered, approved, published and seen by the student", async ({ 
 
   // A student in the class sees the published grade (30/40*40 + 70/100*60 = 72 -> B).
   await login(page, classList.students[0].email, DEMO_PASSWORD);
+  await page.getByRole("button", { name: /^Notifications/ }).click();
+  await expect(page.getByRole("button", { name: /New result: ITC101/ })).toBeVisible();
+  await page.keyboard.press("Escape");
   await open(page, "/my-results");
   const row = page.getByRole("row", { name: /ITC101/ });
   await expect(row).toBeVisible();

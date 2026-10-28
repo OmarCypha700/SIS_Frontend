@@ -21,6 +21,7 @@ import { api, errorMessage } from "@/lib/api";
 export function ResourcePage({
   title, description, endpoint, columns, fields, filters, singular, readRoles, writeRoles, searchPlaceholder,
   defaultOrdering, rowActions, rowHref, allowDelete = true, transform, params, headerActions, hideHeader = false,
+  tableProps, refreshKey = 0,
 }) {
   const { user } = useAuth();
   const canWrite = hasRole(user, ...writeRoles);
@@ -80,7 +81,8 @@ export function ResourcePage({
         params={params}
         columns={canWrite ? [...columns, actionColumn] : columns}
         filters={filters}
-        refreshKey={refresh}
+        refreshKey={refresh + refreshKey}
+        {...tableProps}
         searchPlaceholder={searchPlaceholder}
         defaultOrdering={defaultOrdering}
         rowHref={rowHref}

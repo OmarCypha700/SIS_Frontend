@@ -44,7 +44,13 @@ export default function ImportStaffPage() {
           </label>
         }
         successMessage={(d) =>
-          `${d.created} account(s) created.${d.emails_sent ? " Password set-up emails were sent." : " Set temporary passwords from Staff accounts."}`
+          `${d.created} account(s) created.${
+            !d.emails_sent
+              ? " Set temporary passwords from Staff accounts."
+              : d.emails_waiting
+                ? ` Password set-up emails are being sent; ${d.emails_waiting} will go out over the next day(s) because of the daily email limit. Set temporary passwords for anyone who needs access sooner.`
+                : " Password set-up emails were sent."
+          }`
         }
       />
     </RoleGate>

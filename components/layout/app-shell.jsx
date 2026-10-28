@@ -5,12 +5,14 @@ import { usePathname } from "next/navigation";
 import { useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore } from "react";
 import { useTheme } from "next-themes";
 import {
-  CalendarDays, ChevronDown, KeyRound, LogOut, Menu, Monitor, Moon, PanelLeftClose, PanelLeftOpen, Sun, TriangleAlert,
+  CalendarDays, ChevronDown, Download, KeyRound, LogOut, Menu, Monitor, Moon, PanelLeftClose, PanelLeftOpen, Sun, TriangleAlert,
   UserRound,
 } from "lucide-react";
 
 import { AuthProvider, useAuth } from "@/components/auth/auth-provider";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
+import { NotificationBell } from "@/components/notifications/notification-bell";
+import { NotificationProvider } from "@/components/notifications/notification-provider";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,13 +25,16 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
 import { ROLE_LABELS } from "@/lib/format";
 import { navForRole } from "@/lib/navigation";
+import { useInstallPrompt, useStandalone } from "@/lib/pwa";
 import { saveSidebarCollapsed } from "@/lib/sidebar";
 import { cn } from "@/lib/utils";
 
 export function AppShell({ children, initial, sidebarCollapsed = false }) {
   return (
     <AuthProvider initial={initial}>
-      <ShellLayout initialCollapsed={sidebarCollapsed}>{children}</ShellLayout>
+      <NotificationProvider>
+        <ShellLayout initialCollapsed={sidebarCollapsed}>{children}</ShellLayout>
+      </NotificationProvider>
     </AuthProvider>
   );
 }
@@ -336,6 +341,7 @@ function TopBar({ onMenu, railed, onToggleRail }) {
         ) : (
           <Badge variant="outline" className="hidden sm:inline-flex">No current semester</Badge>
         )}
+        <NotificationBell />
         <ThemeToggle />
         <DropdownMenu>
           <DropdownMenuTrigger asChild>
@@ -363,6 +369,7 @@ function TopBar({ onMenu, railed, onToggleRail }) {
                 <KeyRound /> Change password
               </Link>
             </DropdownMenuItem>
+            <InstallMenuItem />
             <DropdownMenuSeparator />
             <DropdownMenuItem onSelect={logout}>
               <LogOut /> Sign out
@@ -371,6 +378,27 @@ function TopBar({ onMenu, railed, onToggleRail }) {
         </DropdownMenu>
       </div>
     </header>
+  );
+}
+
+function InstallMenuItem() {
+  const { canInstall, install } = useInstallPrompt();
+  const standalone = useStandalone();
+  if (standalone) return null;
+  if (canInstall) {
+    return (
+      <DropdownMenuItem onSelect={install}>
+        <Download /> Install app
+      </DropdownMenuItem>
+    );
+  }
+  // iPhone and iPad have no install prompt: the profile page explains Add to Home Screen.
+  return (
+    <DropdownMenuItem asChild>
+      <Link href="/profile#notifications">
+        <Download /> Install app
+      </Link>
+    </DropdownMenuItem>
   );
 }
 

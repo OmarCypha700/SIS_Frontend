@@ -7,6 +7,7 @@ import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Search } fr
 import { EmptyState, ErrorState } from "@/components/common";
 import { NativeSelect } from "@/components/forms/field";
 import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -18,11 +19,13 @@ import { cn } from "@/lib/utils";
  *
  * columns: [{ key, header, cell?: (row) => node, sortKey?, className? }]
  * filters: [{ key, label, options?: [{value,label}], endpoint?, optionValue?, optionLabel? }]
+ * selectable: adds row checkboxes. `selectedIds` / `onSelectionChange(ids)` hold the selection, which
+ *   is kept across pages and cleared when the search or filters change.
  */
 export function DataTable({
   endpoint, columns, filters = [], params = {}, searchPlaceholder = "Search…", defaultOrdering, rowHref,
   toolbar, refreshKey = 0, emptyTitle = "No records found", emptyDescription, pageSize = 25, onData,
-  searchable = true,
+  searchable = true, selectable = false, selectedIds = [], onSelectionChange, rowLabel = (row) => row.id,
 }) {
   const router = useRouter();
   const [page, setPage] = useState(1);
@@ -51,6 +54,32 @@ export function DataTable({
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [data]);
 
+  const selected = useMemo(() => new Set(selectedIds), [selectedIds]);
+  const pageIds = rows.map((row) => row.id);
+  const pageSelected = pageIds.filter((id) => selected.has(id)).length;
+  const headerState = pageSelected === 0 ? false : pageSelected === pageIds.length ? true : "indeterminate";
+
+  function setSelection(next) {
+    onSelectionChange?.([...next]);
+  }
+  function toggleRow(id, on) {
+    const next = new Set(selected);
+    if (on) next.add(id);
+    else next.delete(id);
+    setSelection(next);
+  }
+  function togglePage(on) {
+    const next = new Set(selected);
+    for (const id of pageIds) {
+      if (on) next.add(id);
+      else next.delete(id);
+    }
+    setSelection(next);
+  }
+  function clearSelection() {
+    if (selectable && selectedIds.length) onSelectionChange?.([]);
+  }
+
   function toggleSort(key) {
     if (!key) return;
     setOrdering((current) => (current === key ? `-${key}` : current === `-${key}` ? undefined : key));
@@ -68,6 +97,7 @@ export function DataTable({
                 onChange={(e) => {
                   setSearch(e.target.value);
                   setPage(1);
+                  clearSelection();
                 }}
                 placeholder={searchPlaceholder}
                 className="pl-8"
@@ -84,6 +114,7 @@ export function DataTable({
                 onChange={(value) => {
                   setFilterValues((prev) => ({ ...prev, [filter.key]: value }));
                   setPage(1);
+                  clearSelection();
                 }}
               />
             ))}
@@ -95,6 +126,16 @@ export function DataTable({
         <Table>
           <TableHeader>
             <TableRow>
+              {selectable && (
+                <TableHead className="w-10">
+                  <Checkbox
+                    checked={headerState}
+                    disabled={pageIds.length === 0 || loading} // never select a page that is being replaced
+                    onCheckedChange={(value) => togglePage(value === true)}
+                    aria-label="Select all on this page"
+                  />
+                </TableHead>
+              )}
               {columns.map((column) => (
                 <TableHead key={column.key} className={cn("whitespace-nowrap", column.className)}>
                   {column.sortKey ? (
@@ -123,6 +164,7 @@ export function DataTable({
             {loading && !data
               ? Array.from({ length: 6 }).map((_, i) => (
                   <TableRow key={i}>
+                    {selectable && <TableCell />}
                     {columns.map((column) => (
                       <TableCell key={column.key}>
                         <Skeleton className="h-5 w-full max-w-40" />
@@ -133,12 +175,22 @@ export function DataTable({
               : rows.map((row) => (
                   <TableRow
                     key={row.id ?? JSON.stringify(row)}
+                    data-state={selected.has(row.id) ? "selected" : undefined}
                     className={cn(rowHref && "cursor-pointer", loading && "opacity-60")}
                     onClick={rowHref ? (e) => {
-                      if (e.target.closest("a,button,input,select,[role=menuitem]")) return;
+                      if (e.target.closest("a,button,input,select,[role=menuitem],[role=checkbox],[data-select-cell]")) return;
                       router.push(rowHref(row));
                     } : undefined}
                   >
+                    {selectable && (
+                      <TableCell data-select-cell className="w-10">
+                        <Checkbox
+                          checked={selected.has(row.id)}
+                          onCheckedChange={(value) => toggleRow(row.id, value === true)}
+                          aria-label={`Select ${rowLabel(row)}`}
+                        />
+                      </TableCell>
+                    )}
                     {columns.map((column) => (
                       <TableCell key={column.key} className={column.className}>
                         {column.cell ? column.cell(row) : (row[column.key] ?? "—")}

@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
  * Optimistic check only: send visitors without a session cookie to the sign-in page.
  * Real authentication and authorisation happen in Django on every API request.
  */
-const PUBLIC_PATHS = ["/login", "/forgot-password", "/reset-password"];
+const PUBLIC_PATHS = ["/login", "/forgot-password", "/reset-password", "/offline"];
 
 export function proxy(request) {
   const { pathname, search } = request.nextUrl;
@@ -20,6 +20,8 @@ export function proxy(request) {
 }
 
 export const config = {
-  // Skip API/media proxying, Next.js internals and static files.
-  matcher: ["/((?!api/|media/|_next/|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico|txt)$).*)"],
+  // Skip API/media proxying, Next.js internals, the service worker, manifest and static files.
+  matcher: [
+    "/((?!api/|media/|_next/|sounds/|sw\\.js|manifest\\.webmanifest|favicon.ico|.*\\.(?:png|jpg|jpeg|svg|webp|ico|txt|wav)$).*)",
+  ],
 };

@@ -1,15 +1,16 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowRightLeft, FileText, Loader2, Pencil, Power, Tag } from "lucide-react";
+import { ArrowRightLeft, FileText, Loader2, Pencil, Power, Tag, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { hasRole, useAuth } from "@/components/auth/auth-provider";
 import {
   ConfirmDialog, DescriptionList, EmptyState, ErrorState, LoadingBlock, PageHeader, RoleGate, StatusBadge,
 } from "@/components/common";
+import { DeleteRecordDialog } from "@/components/delete-record-dialog";
 import { Field, NativeSelect } from "@/components/forms/field";
 import { AcademicRecord } from "@/components/results/academic-record";
 import { DataTable } from "@/components/tables/data-table";
@@ -28,7 +29,9 @@ const GENDERS = { F: "Female", M: "Male", O: "Other", U: "Prefer not to say" };
 export default function StudentDetailPage() {
   const { id } = useParams();
   const { user } = useAuth();
+  const router = useRouter();
   const canManage = hasRole(user, "ADMIN", "REGISTRAR");
+  const isAdmin = hasRole(user, "ADMIN");
   const { data: student, error, loading, reload, setData } = useApi(`/students/${id}/`);
   const [dialog, setDialog] = useState(null);
 
@@ -66,6 +69,11 @@ export default function StudentDetailPage() {
               <Button variant={student.is_active ? "destructive" : "outline"} onClick={() => setDialog("active")}>
                 <Power /> {student.is_active ? "Deactivate" : "Re-activate"}
               </Button>
+              {isAdmin && (
+                <Button variant="ghost" className="text-destructive" onClick={() => setDialog("delete")}>
+                  <Trash2 /> Delete
+                </Button>
+              )}
             </>
           )
         }
@@ -141,6 +149,15 @@ export default function StudentDetailPage() {
 
       {canManage && (
         <>
+          {dialog === "delete" && (
+            <DeleteRecordDialog
+              name={`${student.student_number} ${student.full_name}`}
+              noun="student record"
+              endpoint={`/students/${id}/`}
+              onClose={() => setDialog(null)}
+              onDeleted={() => router.replace("/students")}
+            />
+          )}
           <StatusDialog open={dialog === "status"} onOpenChange={(o) => !o && setDialog(null)} student={student} onSaved={setData} />
           <PlacementDialog open={dialog === "placement"} onOpenChange={(o) => !o && setDialog(null)} student={student} onSaved={setData} />
           <ConfirmDialog
