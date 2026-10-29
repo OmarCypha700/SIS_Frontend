@@ -8,6 +8,7 @@ import {
 import { useAuth } from "@/components/auth/auth-provider";
 import { EmptyState, ErrorState, LoadingBlock, PageHeader, StatCard, StatusBadge } from "@/components/common";
 import { BarList } from "@/components/dashboard/bar-list";
+import { StudentPhoto } from "@/components/students/student-photo";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Progress } from "@/components/ui/progress";
@@ -119,11 +120,43 @@ function DeliveryCard() {
   );
 }
 
+/** Sheets nobody but their submitter could approve or publish: someone else needs the permission. */
+function SignoffBlockedCard({ items }) {
+  if (!items?.length) return null;
+  return (
+    <Card className="border-destructive/40">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2 text-destructive">
+          <AlertTriangle className="size-5" /> Sign-off needs attention
+        </CardTitle>
+        <CardDescription>
+          No one other than the submitter can take the next step for these results. Give another person the permission
+          under Staff accounts.
+        </CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ul className="divide-y text-sm">
+          {items.map((item) => (
+            <li key={`${item.kind}-${item.id}-${item.step}`} className="py-2">
+              <Link href={item.link} className="font-medium hover:underline">
+                {item.course_code}
+                {item.kind === "resit" ? " (resit)" : ""}
+              </Link>
+              <p className="text-muted-foreground">{item.message}</p>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
+  );
+}
+
 function RegistryDashboard({ data }) {
   const results = data.results || {};
   const reg = data.registration;
   return (
     <div className="space-y-6">
+      <SignoffBlockedCard items={data.signoff_blocked} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Active students" value={data.students.active} hint={`${data.students.total} records in total`} icon={Users} />
         <StatCard
@@ -216,6 +249,7 @@ function OfficerDashboard({ data }) {
   const results = data.results || {};
   return (
     <div className="space-y-6">
+      <SignoffBlockedCard items={data.signoff_blocked} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Awaiting review" value={results.SUBMITTED} icon={ListChecks} />
         <StatCard label="Approved, unpublished" value={results.APPROVED} icon={CheckCircle2} />
@@ -319,12 +353,24 @@ function LecturerDashboard({ data }) {
 }
 
 function StudentDashboard({ data }) {
+  const { user } = useAuth();
   const s = data.student;
   if (!s) return <EmptyState title="No student record" description="Your account is not linked to a student record. Contact the registry." />;
   const reg = data.registration;
   const semester = data.current_semester;
   return (
     <div className="space-y-6">
+      <Card>
+        <CardContent className="flex items-center gap-4">
+          <StudentPhoto src={user.student?.photo_url} name={user.full_name} size="md" />
+          <div className="min-w-0">
+            <p className="truncate font-semibold">{user.full_name}</p>
+            <p className="text-sm text-muted-foreground">
+              {user.student?.student_number} · {s.programme_code} · {s.level}
+            </p>
+          </div>
+        </CardContent>
+      </Card>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <StatCard label="Programme" value={<span className="text-base">{s.programme}</span>} hint={s.programme_code} icon={GraduationCap} />
         <StatCard label="Current level" value={s.level} hint={<StatusBadge status={s.status} label={s.status_display} />} />

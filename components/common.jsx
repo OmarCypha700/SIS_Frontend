@@ -45,6 +45,7 @@ const STATUS_COLORS = {
   PLANNED: "gray", DRAFT: "gray", CLOSED: "gray", DROPPED: "gray", APPLICANT: "gray", SUSPENDED: "red",
   WITHDRAWN: "red", REJECTED: "red", CANCELLED: "red", DISMISSED: "red", DISMISS: "red", PROBATION: "amber",
   GOOD: "green", ELIGIBLE: "amber", NOT_TAKEN: "gray", PROMOTE: "green", REPEAT: "amber", STAY: "gray",
+  VALID: "green", REVOKED: "red",
 };
 
 export function StatusBadge({ status, label, className }) {

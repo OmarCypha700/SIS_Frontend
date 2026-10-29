@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
 import { CheckCircle2, Info, Loader2, Save, Send, Undo2, Upload, UserPlus } from "lucide-react";
+import { SignoffWarnings } from "@/components/results/signoff-warnings";
 import { toast } from "sonner";
 
 import { ConfirmDialog, ErrorState, LoadingBlock, PageHeader, RoleGate, StatusBadge } from "@/components/common";
@@ -131,6 +132,7 @@ export default function ResitSheetPage() {
           Students who do not register keep their original result.
         </AlertDescription>
       </Alert>
+      <SignoffWarnings warnings={sheet.signoff_warnings} />
       {sheet.status === "RETURNED" && sheet.last_comment && (
         <Alert className="mb-4">
           <Undo2 />

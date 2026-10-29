@@ -4,7 +4,7 @@ import { NextResponse } from "next/server";
  * Optimistic check only: send visitors without a session cookie to the sign-in page.
  * Real authentication and authorisation happen in Django on every API request.
  */
-const PUBLIC_PATHS = ["/login", "/forgot-password", "/reset-password", "/offline"];
+const PUBLIC_PATHS = ["/login", "/forgot-password", "/reset-password", "/offline", "/verify"];
 
 export function proxy(request) {
   const { pathname, search } = request.nextUrl;

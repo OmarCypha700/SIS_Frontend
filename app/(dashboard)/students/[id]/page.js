@@ -13,7 +13,9 @@ import {
 import { DeleteRecordDialog } from "@/components/delete-record-dialog";
 import { Field, NativeSelect } from "@/components/forms/field";
 import { AcademicRecord } from "@/components/results/academic-record";
+import { PhotoCard } from "@/components/students/photo-card";
 import { DataTable } from "@/components/tables/data-table";
+import { StudentTranscripts } from "@/components/transcripts/student-transcripts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
@@ -87,9 +89,10 @@ export default function StudentDetailPage() {
         </TabsList>
         <TabsContent value="profile">
           <Card>
-            <CardContent>
+            <CardContent className="flex flex-col gap-6 sm:flex-row sm:items-start">
+              <PhotoCard student={student} canEdit={canManage} onChange={(updated) => setData({ ...student, ...updated })} />
               <DescriptionList
-                className="lg:grid-cols-3"
+                className="flex-1 lg:grid-cols-3"
                 items={[
                   { label: "Student number", value: student.student_number },
                   { label: "Email", value: student.email },
@@ -220,6 +223,8 @@ function PlacementHistory({ studentId }) {
 }
 
 function StudentRecordTab({ studentId }) {
+  const { user } = useAuth();
+  const canSeeTranscripts = hasRole(user, "ADMIN", "REGISTRAR");
   const { data, error, loading, reload } = useApi(`/students/${studentId}/academic-record/`);
   if (loading && !data) return <LoadingBlock />;
   if (error) return <ErrorState error={error} onRetry={reload} />;
@@ -233,10 +238,11 @@ function StudentRecordTab({ studentId }) {
         </p>
         <Button variant="outline" size="sm" asChild>
           <Link href={`/students/${studentId}/transcript`}>
-            <FileText /> Printable transcript
+            <FileText /> Unofficial copy
           </Link>
         </Button>
       </div>
+      {canSeeTranscripts && <StudentTranscripts studentId={studentId} />}
       <AcademicRecord record={data} />
     </div>
   );

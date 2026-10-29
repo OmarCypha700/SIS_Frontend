@@ -31,6 +31,12 @@ const FIELDS = [
   { name: "can_publish_results", label: "Can publish results", type: "checkbox", hint: "Release approved results to students" },
   { name: "can_request_amendments", label: "Can request amendments", type: "checkbox", hint: "Propose changes to published results" },
   { name: "can_approve_amendments", label: "Can approve amendments", type: "checkbox", hint: "Apply changes to published results" },
+  {
+    name: "can_issue_transcripts",
+    label: "Can issue official transcripts",
+    type: "checkbox",
+    hint: "Issue, reprint and revoke numbered transcripts. Administrators and registrars only; on by default for administrators.",
+  },
   { name: "password", label: "Temporary password", inputType: "password", hint: "Required for new accounts. The user must change it at first sign-in.", span: 2 },
 ];
 
@@ -49,9 +55,9 @@ const COLUMNS = [
   { key: "role_display", header: "Role" },
   {
     key: "caps",
-    header: "Result permissions",
+    header: "Permissions",
     cell: (r) =>
-      [r.can_approve_results && "Approve", r.can_publish_results && "Publish", r.can_request_amendments && "Request amendments", r.can_approve_amendments && "Approve amendments"]
+      [r.can_approve_results && "Approve", r.can_publish_results && "Publish", r.can_request_amendments && "Request amendments", r.can_approve_amendments && "Approve amendments", r.can_issue_transcripts && "Issue transcripts"]
         .filter(Boolean)
         .join(", ") || "—",
   },

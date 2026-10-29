@@ -5,6 +5,7 @@ import { ExportMenu } from "@/components/export-menu";
 import { Badge } from "@/components/ui/badge";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { StudentPhoto } from "@/components/students/student-photo";
 import { useApi } from "@/hooks/use-api";
 import { titleCase } from "@/lib/format";
 
@@ -43,7 +44,10 @@ export function ClassList({ offeringId }) {
                   <TableRow key={s.registration}>
                     <TableCell className="pl-6 font-medium">{s.student_number}</TableCell>
                     <TableCell>
-                      {s.full_name}
+                      <span className="inline-flex items-center gap-2.5">
+                        <StudentPhoto src={s.thumbnail_url} name={s.full_name} size="sm" />
+                        {s.full_name}
+                      </span>
                       {s.is_retake && <Badge variant="outline" className="ml-2">Retake</Badge>}
                     </TableCell>
                     <TableCell>{s.programme_code}</TableCell>

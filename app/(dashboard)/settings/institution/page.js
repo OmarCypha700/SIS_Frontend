@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { Controller, useForm } from "react-hook-form";
+import { Controller, useForm, useWatch } from "react-hook-form";
 import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
@@ -12,6 +12,7 @@ import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Input } from "@/components/ui/input";
+import { TranscriptImageField } from "@/components/transcripts/transcript-image-field";
 import { Textarea } from "@/components/ui/textarea";
 import { useApi } from "@/hooks/use-api";
 import { api, applyFieldErrors, errorMessage } from "@/lib/api";
@@ -19,6 +20,7 @@ import { api, applyFieldErrors, errorMessage } from "@/lib/api";
 const TEXT_FIELDS = [
   "name", "short_name", "motto", "email", "phone", "website", "physical_address", "postal_address", "country", "timezone",
   "primary_color", "academic_year_format", "student_number_format", "cgpa_retake_policy", "gpa_decimal_places", "result_slip_footer",
+  "transcript_signatory_name", "transcript_signatory_title", "transcript_serial_format", "transcript_footer",
 ];
 const FLAGS = [
   ["allow_higher_level_courses", "Students may register for courses above their level"],
@@ -27,6 +29,7 @@ const FLAGS = [
   ["allow_credit_overload", "Allow exceeding the maximum credits, subject to approval"],
   ["registration_requires_approval", "Every registration must be approved by the registry"],
   ["approver_must_differ_from_submitter", "Results must be approved by someone other than the submitter"],
+  ["publisher_must_differ_from_submitter", "Results must be published by someone other than the submitter"],
   ["amendments_require_second_approver", "Amendments must be approved by someone other than the requester"],
 ];
 
@@ -34,6 +37,9 @@ export default function InstitutionSettingsPage() {
   const { reload: reloadShell } = useAuth();
   const { data, error, loading, reload } = useApi("/institution/settings/");
   const { register, handleSubmit, reset, control, formState, setError } = useForm();
+  const [shortName, studentFormat, serialFormat] = useWatch({
+    control, name: ["short_name", "student_number_format", "transcript_serial_format"],
+  });
   const [logo, setLogo] = useState(null);
 
   useEffect(() => {
@@ -112,11 +118,15 @@ export default function InstitutionSettingsPage() {
             <CardHeader>
               <CardTitle>Numbering</CardTitle>
               <CardDescription>
-                Student number tokens: {"{SHORT}"} short name, {"{YEAR}"} admission year, {"{PROG}"} programme code, {"{SEQ:04}"} sequence padded to 4 digits.
+                Student number tokens: {"{SHORT}"} short name, {"{YEAR}"} admission year (2026) or {"{YEAR:02}"} its last two
+                digits (26), {"{PROG}"} programme code, {"{SEQ:04}"} sequence padded to 4 digits.
               </CardDescription>
             </CardHeader>
             <CardContent className="grid gap-4 sm:grid-cols-2">
-              {text("student_number_format", "Student number format", { required: true })}
+              <div className="space-y-1">
+                {text("student_number_format", "Student number format", { required: true })}
+                <FormatExample format={studentFormat} short={shortName} />
+              </div>
               {text("academic_year_format", "Academic year naming", { hint: "{start}/{end} gives 2025/2026" })}
             </CardContent>
           </Card>
@@ -159,6 +169,36 @@ export default function InstitutionSettingsPage() {
               </div>
             </CardContent>
           </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Official transcripts</CardTitle>
+              <CardDescription>
+                Printed on every official transcript. Without an uploaded signature and seal, transcripts are printed with
+                a signature line and a stamp box for the designated authority to sign and stamp by hand.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid gap-4 sm:grid-cols-2">
+                {text("transcript_signatory_name", "Signatory name", { hint: "Leave blank to have it written by hand" })}
+                {text("transcript_signatory_title", "Signatory title", { hint: "e.g. Registrar" })}
+                {text("transcript_serial_format", "Serial number format", {
+                  hint: "{SHORT} short name, {YEAR} year of issue or {YEAR:02} for 26, {SEQ:06} sequence padded to 6 digits",
+                })}
+                <FormatExample format={serialFormat} short={shortName} />
+                <Field id="transcript_footer" label="Extra footer line" className="sm:col-span-2">
+                  {(aria) => <Textarea rows={2} {...aria} {...register("transcript_footer")} />}
+                </Field>
+              </div>
+              <div className="grid gap-6 sm:grid-cols-2">
+                <TranscriptImageField kind="signature" label="Signature" present={data.has_transcript_signature} onChanged={reload} />
+                <TranscriptImageField kind="seal" label="Seal / stamp" present={data.has_transcript_seal} onChanged={reload} />
+              </div>
+              <p className="text-xs text-muted-foreground">
+                The signature and seal are stored privately and are never available at a public address. They are only
+                printed when the person issuing chooses &ldquo;Include the uploaded signature and seal&rdquo;.
+              </p>
+            </CardContent>
+          </Card>
           <div className="flex justify-end">
             <Button type="submit" disabled={formState.isSubmitting}>
               {formState.isSubmitting && <Loader2 className="animate-spin" />}
@@ -168,5 +208,26 @@ export default function InstitutionSettingsPage() {
         </form>
       )}
     </RoleGate>
+  );
+}
+
+/**
+ * Live example of a numbering format, mirroring the server: {YEAR:02} keeps the last two digits of
+ * the year, {SEQ:04} pads the sequence. Only an illustration; the server validates the format on save.
+ */
+function FormatExample({ format, short }) {
+  if (!format) return null;
+  const year = new Date().getFullYear();
+  const example = format.replace(/\{(SHORT|YEAR|PROG|SEQ)(?::0?(\d+))?\}/g, (_, token, width) => {
+    const n = width ? Number(width) : 0;
+    if (token === "SHORT") return short || "SIS";
+    if (token === "PROG") return "RM";
+    if (token === "YEAR") return n ? String(year % 10 ** n).padStart(n, "0") : String(year);
+    return n ? "1".padStart(n, "0") : "1";
+  });
+  return (
+    <p className="text-xs text-muted-foreground">
+      Example: <span className="font-mono text-foreground">{example}</span>
+    </p>
   );
 }

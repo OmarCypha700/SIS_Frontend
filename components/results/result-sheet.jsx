@@ -5,6 +5,7 @@ import {
   CheckCircle2, FilePen, FileUp, Loader2, Plus, RotateCcw, Save, Send, Trash2, Undo2, Upload,
 } from "lucide-react";
 import Link from "next/link";
+import { SignoffWarnings } from "@/components/results/signoff-warnings";
 import { useRouter } from "next/navigation";
 import { toast } from "sonner";
 
@@ -102,6 +103,7 @@ export function ResultSheet({ sheet, onChange }) {
         }
       />
 
+      <SignoffWarnings warnings={sheet.signoff_warnings} />
       {sheet.status === "RETURNED" && sheet.last_comment && (
         <Alert>
           <Undo2 />

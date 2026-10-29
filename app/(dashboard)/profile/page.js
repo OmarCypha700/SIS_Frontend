@@ -10,6 +10,7 @@ import { toast } from "sonner";
 import { hasRole, useAuth } from "@/components/auth/auth-provider";
 import { DescriptionList, PageHeader } from "@/components/common";
 import { Field } from "@/components/forms/field";
+import { StudentPhoto } from "@/components/students/student-photo";
 import { NotificationSettings } from "@/components/notifications/notification-settings";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -36,8 +37,10 @@ export default function ProfilePage() {
         <CardHeader>
           <CardTitle>Account</CardTitle>
         </CardHeader>
-        <CardContent>
+        <CardContent className="flex flex-col gap-6 sm:flex-row sm:items-start">
+          {user.student && <StudentPhoto src={user.student.photo_url} name={user.full_name} size="lg" />}
           <DescriptionList
+            className="flex-1"
             items={[
               { label: "Name", value: user.full_name },
               { label: "Email", value: user.email },

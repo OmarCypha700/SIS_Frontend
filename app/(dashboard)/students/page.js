@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { Plus, Power, PowerOff, Tags, Trash2, Upload } from "lucide-react";
+import { ImagePlus, Plus, Power, PowerOff, Tags, Trash2, Upload } from "lucide-react";
 
 import { hasRole, useAuth } from "@/components/auth/auth-provider";
 import { PageHeader, RoleGate, StatusBadge } from "@/components/common";
 import { ExportMenu } from "@/components/export-menu";
+import { StudentPhoto } from "@/components/students/student-photo";
 import { BulkActions } from "@/components/tables/bulk-actions";
 import { DataTable } from "@/components/tables/data-table";
 import { Button } from "@/components/ui/button";
@@ -14,7 +15,17 @@ import { STUDENT_STATUS_OPTIONS } from "@/lib/options";
 
 const COLUMNS = [
   { key: "student_number", header: "Student no.", sortKey: "student_number", cell: (r) => <span className="font-medium">{r.student_number}</span> },
-  { key: "full_name", header: "Name", sortKey: "last_name" },
+  {
+    key: "full_name",
+    header: "Name",
+    sortKey: "last_name",
+    cell: (r) => (
+      <span className="flex items-center gap-2.5">
+        <StudentPhoto src={r.thumbnail_url} name={r.full_name} size="xs" />
+        {r.full_name}
+      </span>
+    ),
+  },
   { key: "programme_code", header: "Programme" },
   { key: "level_name", header: "Level" },
   { key: "status", header: "Status", cell: (r) => <StatusBadge status={r.status} /> },
@@ -45,6 +56,11 @@ export default function StudentsPage() {
               <Button variant="outline" asChild>
                 <Link href="/students/import">
                   <Upload /> Import
+                </Link>
+              </Button>
+              <Button variant="outline" asChild>
+                <Link href="/students/photos">
+                  <ImagePlus /> Import photos
                 </Link>
               </Button>
               <Button asChild>
