@@ -1,10 +1,14 @@
 "use client";
 
+import Link from "next/link";
 import { useState } from "react";
+import { CheckCheck, ListPlus, XCircle } from "lucide-react";
 
 import { PageHeader, RoleGate, StatCard, StatusBadge } from "@/components/common";
 import { ExportMenu } from "@/components/export-menu";
+import { BulkActions } from "@/components/tables/bulk-actions";
 import { DataTable } from "@/components/tables/data-table";
+import { Button } from "@/components/ui/button";
 import { useApi } from "@/hooks/use-api";
 import { formatDateTime } from "@/lib/format";
 import { REGISTRATION_STATUS_OPTIONS } from "@/lib/options";
@@ -21,9 +25,31 @@ const COLUMNS = [
   { key: "submitted_at", header: "Submitted", sortKey: "submitted_at", cell: (r) => formatDateTime(r.submitted_at) },
 ];
 
+const registrations = (n) => `${n} registration${n === 1 ? "" : "s"}`;
+
+const REVIEW_ACTIONS = [
+  {
+    value: "approve",
+    label: "Approve",
+    icon: CheckCheck,
+    confirm: (n) => `Approve ${registrations(n)} awaiting approval. Any that are not awaiting approval are skipped.`,
+    done: (n) => `${registrations(n)} approved.`,
+  },
+  {
+    value: "reject",
+    label: "Reject",
+    icon: XCircle,
+    destructive: true,
+    confirm: (n) => `Reject ${registrations(n)}. Their courses are dropped and each student is told. The reason is shown to them.`,
+    done: (n) => `${registrations(n)} rejected.`,
+  },
+];
+
 export default function RegistrationsPage() {
-  const { data: stats } = useApi("/registrations/statistics/");
+  const { data: stats, reload: reloadStats } = useApi("/registrations/statistics/");
   const [query, setQuery] = useState({});
+  const [selected, setSelected] = useState([]);
+  const [refresh, setRefresh] = useState(0);
 
   const { page, page_size, ...exportFilters } = query;
 
@@ -31,9 +57,16 @@ export default function RegistrationsPage() {
     <RoleGate roles={["ADMIN", "REGISTRAR"]}>
       <PageHeader
         title="Registrations"
-        description="Review, approve and export semester registrations."
+        description="Review, approve and export semester registrations. Tick registrations awaiting approval to approve or reject them together."
         actions={
-          <ExportMenu url="/registrations/export/" params={exportFilters} filename="registrations" />
+          <>
+            <Button asChild variant="outline">
+              <Link href="/registrations/bulk">
+                <ListPlus /> Bulk registration
+              </Link>
+            </Button>
+            <ExportMenu url="/registrations/export/" params={exportFilters} filename="registrations" />
+          </>
         }
       />
       {stats && (
@@ -50,6 +83,11 @@ export default function RegistrationsPage() {
         defaultOrdering="-submitted_at"
         rowHref={(r) => `/registrations/${r.id}`}
         onData={(_, params) => setQuery(params)}
+        refreshKey={refresh}
+        selectable
+        selectedIds={selected}
+        onSelectionChange={setSelected}
+        rowLabel={(r) => `${r.student_number} ${r.student_name}`}
         filters={[
           { key: "semester", label: "Semester", endpoint: "/semesters/", optionLabel: (s) => `${s.academic_year_name} ${s.name}` },
           { key: "status", label: "Status", options: REGISTRATION_STATUS_OPTIONS },
@@ -57,6 +95,18 @@ export default function RegistrationsPage() {
           { key: "level", label: "Level", endpoint: "/levels/" },
           { key: "course", label: "Course", endpoint: "/courses/", optionLabel: (c) => c.code },
         ]}
+      />
+      <BulkActions
+        endpoint="/registrations/bulk-review/"
+        noun="registration"
+        selectedIds={selected}
+        onClear={() => setSelected([])}
+        onDone={(stillSelected) => {
+          setSelected(stillSelected);
+          setRefresh((n) => n + 1);
+          reloadStats();
+        }}
+        actions={REVIEW_ACTIONS}
       />
       {stats?.offerings?.length > 0 && (
         <div className="mt-8">
