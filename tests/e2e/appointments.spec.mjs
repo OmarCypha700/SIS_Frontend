@@ -28,6 +28,16 @@ test("a tutor appointed results officer gains the office and loses it when the a
   await open(page, "/profile");
   await expect(page.getByText("Lecturer · Results Officer").first()).toBeVisible();
 
+  // "My courses" lists only the courses assigned to the tutor, not every course the office can see.
+  const mine = await apiGet(page, "/course-offerings/?mine=true&page_size=100");
+  const all = await apiGet(page, "/course-offerings/?page_size=1");
+  expect(all.count).toBeGreaterThan(mine.count);
+  await nav.getByRole("link", { name: "My courses" }).click();
+  await page.waitForLoadState("networkidle");
+  const listed = page.getByRole("link", { name: "Marks" });
+  await expect(listed).toHaveCount(mine.results.length);
+  for (const course of mine.results) await expect(page.getByText(course.course_code, { exact: true }).first()).toBeVisible();
+
   // The administrator ends it; the office's access goes, teaching stays.
   await login(page, ACCOUNTS.admin);
   await open(page, "/settings/appointments");

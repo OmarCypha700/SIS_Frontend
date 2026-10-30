@@ -38,12 +38,16 @@ const COLUMNS = [
   },
 ];
 
+// Only courses assigned to me, even for a registrar or results officer who can see every course.
+const MINE = { mine: "true" };
+
 export default function LecturerCoursesPage() {
   return (
     <RoleGate roles={["LECTURER"]}>
       <PageHeader title="My courses" description="Course offerings assigned to you. Open one to enter and submit marks." />
       <DataTable
         endpoint="/course-offerings/"
+        params={MINE}
         columns={COLUMNS}
         searchPlaceholder="Search course…"
         filters={[{ key: "semester", label: "Semester", endpoint: "/semesters/", optionLabel: (s) => `${s.academic_year_name} ${s.name}` }]}
