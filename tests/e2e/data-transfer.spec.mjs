@@ -117,7 +117,35 @@ test("admin imports courses and staff accounts", async ({ page }) => {
   await page.getByRole("button", { name: "Check file" }).click();
   await expect(page.getByText("An account with this email already exists.")).toBeVisible();
   await page.getByRole("button", { name: "Create 1 row(s)" }).click();
-  await expect(page.getByText(/1 account\(s\) created\. Password set-up emails were sent\./).first()).toBeVisible();
+  await expect(page.getByText(/1 account\(s\) created\. Print or download the temporary passwords below\./).first()).toBeVisible();
   const users = await apiGet(page, "/users/?search=kwesi.new");
   expect(users.results[0].role).toBe("LECTURER");
+
+  // The one-time list of temporary passwords downloads as CSV.
+  const [download] = await Promise.all([
+    page.waitForEvent("download"),
+    page.getByRole("button", { name: "Download CSV" }).click(),
+  ]);
+  const sheet = (await (await download.createReadStream()).toArray()).join("");
+  const temporary = sheet.trim().split(/\r?\n/)[1].split(",").at(-1);
+  expect(temporary).toMatch(/^[A-Za-z0-9]{4}-[A-Za-z0-9]{4}-[A-Za-z0-9]{4}$/);
+
+  // First sign-in: nothing else is available until the person chooses their own password,
+  // and a crafted ?next= cannot send them to another site.
+  await page.context().clearCookies();
+  await open(page, "/login?next=%2F%5Cevil.example");
+  await page.getByLabel("Email").fill("kwesi.new@northridge.example");
+  await page.getByLabel("Password").fill(temporary);
+  await page.getByRole("button", { name: "Sign in" }).click();
+  await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
+  await expect(page.getByRole("heading", { name: "Welcome, Kwesi" })).toBeVisible();
+  const blocked = await page.request.get("/api/v1/notifications/unread-count/");
+  expect(blocked.status()).toBe(403);
+  await page.getByLabel("Temporary password").fill(temporary);
+  await page.getByLabel("New password", { exact: true }).fill("Kwesi-Own-Secret-2026");
+  await page.getByLabel("Confirm new password").fill("Kwesi-Own-Secret-2026");
+  await page.getByRole("button", { name: "Change password" }).click();
+  await expect(page.getByText("Password changed.")).toBeVisible({ timeout: 15_000 });
+  await expect(page.getByLabel("Temporary password")).toBeHidden();
+  expect((await page.request.get("/api/v1/notifications/unread-count/")).status()).toBe(200);
 });

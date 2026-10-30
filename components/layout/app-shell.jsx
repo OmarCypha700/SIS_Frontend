@@ -10,6 +10,7 @@ import {
 } from "lucide-react";
 
 import { AuthProvider, useAuth } from "@/components/auth/auth-provider";
+import { PasswordCard } from "@/components/auth/password-card";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { NotificationProvider } from "@/components/notifications/notification-provider";
@@ -76,6 +77,9 @@ function ShellLayout({ children, initialCollapsed }) {
   }
 
   const brand = institution?.primary_color;
+  if (user.must_change_password) {
+    return <ChooseOwnPassword user={user} institution={institution} onChanged={reload} />;
+  }
   return (
     <div
       className="min-h-svh bg-muted/30"
@@ -101,17 +105,41 @@ function ShellLayout({ children, initialCollapsed }) {
       <div className={cn("transition-[padding] duration-200", railed ? "lg:pl-16" : "lg:pl-64")}>
         <TopBar onMenu={() => setMobileOpen(true)} railed={railed} onToggleRail={toggleRail} />
         <main className={cn("mx-auto w-full px-4 py-6 sm:px-6 lg:px-8", railed ? "max-w-[100rem]" : "max-w-7xl")}>
-          {user.must_change_password && (
-            <div className="mb-4 flex flex-wrap items-center gap-3 rounded-lg border border-amber-300 bg-amber-50 px-4 py-3 text-sm text-amber-900 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-200">
-              <KeyRound className="size-4" />
-              <span>You are using a temporary password. Please choose a new one.</span>
-              <Button asChild size="sm" variant="outline" className="ml-auto">
-                <Link href="/profile#password">Change password</Link>
-              </Button>
-            </div>
-          )}
           {children}
         </main>
+      </div>
+    </div>
+  );
+}
+
+/** First sign-in with a temporary password: nothing else is available until it is changed (the API enforces this too). */
+function ChooseOwnPassword({ user, institution, onChanged }) {
+  const { logout } = useAuth();
+  const brand = institution?.primary_color;
+  return (
+    <div
+      className="flex min-h-svh items-center justify-center bg-muted/30 p-4"
+      style={brand ? { "--primary": brand, "--ring": brand } : undefined}
+    >
+      <div className="w-full max-w-xl space-y-4">
+        <div className="flex items-start gap-3">
+          <KeyRound className="mt-1 size-5 text-primary" />
+          <div>
+            <h1 className="text-xl font-semibold">Welcome, {user.first_name}</h1>
+            <p className="text-sm text-muted-foreground">
+              You signed in with a temporary password. Choose your own password to continue.
+            </p>
+          </div>
+        </div>
+        <PasswordCard
+          title="Choose your password"
+          currentLabel="Temporary password"
+          description="Use at least 10 characters that only you know. Avoid common words, personal details or only numbers."
+          onChanged={onChanged}
+        />
+        <Button variant="ghost" onClick={logout}>
+          <LogOut /> Sign out
+        </Button>
       </div>
     </div>
   );

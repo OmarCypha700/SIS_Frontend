@@ -20,7 +20,7 @@ import { api, errorMessage, fieldErrors } from "@/lib/api";
  */
 export function ImportWizard({
   previewUrl, confirmUrl, templateUrl, templateName, instructions, columns, confirmLabel = "Import",
-  confirmExtra, extraBody, onImported, successMessage,
+  confirmExtra, extraBody, onImported, successMessage, renderDone,
 }) {
   const [file, setFile] = useState(null);
   const [preview, setPreview] = useState(null);
@@ -68,6 +68,7 @@ export function ImportWizard({
           <AlertDescription>{successMessage ? successMessage(done) : `${done.created} record(s) were created.`}</AlertDescription>
         </Alert>
       )}
+      {done && renderDone?.(done)}
       <Card>
         <CardHeader className="flex flex-col gap-3 sm:flex-row sm:items-start sm:justify-between">
           <div>

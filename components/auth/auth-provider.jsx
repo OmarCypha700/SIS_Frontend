@@ -3,7 +3,7 @@
 import { createContext, useCallback, useContext, useEffect, useMemo, useState } from "react";
 import { usePathname, useRouter } from "next/navigation";
 
-import { api } from "@/lib/api";
+import { api, PASSWORD_CHANGE_EVENT } from "@/lib/api";
 import { forgetDevice } from "@/lib/push";
 
 const AuthContext = createContext(null);
@@ -45,6 +45,12 @@ export function AuthProvider({ children, initial }) {
   useEffect(() => {
     if (!hasInitial) load();
   }, [load, hasInitial]);
+
+  // A temporary password set while signed in (e.g. by an administrator): reload to show the change screen.
+  useEffect(() => {
+    window.addEventListener(PASSWORD_CHANGE_EVENT, load);
+    return () => window.removeEventListener(PASSWORD_CHANGE_EVENT, load);
+  }, [load]);
 
   const logout = useCallback(async () => {
     try {

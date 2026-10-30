@@ -19,9 +19,16 @@ const schema = z.object({
   password: z.string().min(1, "Enter your password."),
 });
 
+/** Where to go after sign-in: a path on this site only (browsers treat "/\evil.example" as another site). */
 function safeNext(value) {
-  // Only allow same-site relative paths to avoid open redirects.
-  return value && value.startsWith("/") && !value.startsWith("//") ? value : "/dashboard";
+  if (!value || !value.startsWith("/") || value.startsWith("//") || value.includes("\\")) return "/dashboard";
+  try {
+    const url = new URL(value, window.location.origin);
+    if (url.origin !== window.location.origin) return "/dashboard";
+    return url.pathname + url.search + url.hash;
+  } catch {
+    return "/dashboard";
+  }
 }
 
 export function LoginForm() {

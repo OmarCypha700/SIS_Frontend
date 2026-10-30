@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { hasRole, useAuth } from "@/components/auth/auth-provider";
+import { PasswordCard } from "@/components/auth/password-card";
 import { DescriptionList, PageHeader } from "@/components/common";
 import { Field } from "@/components/forms/field";
 import { StudentPhoto } from "@/components/students/student-photo";
@@ -20,13 +21,6 @@ import { useApi } from "@/hooks/use-api";
 import { api, applyFieldErrors, errorMessage } from "@/lib/api";
 import { ROLE_LABELS } from "@/lib/format";
 
-const passwordSchema = z
-  .object({
-    current_password: z.string().min(1, "Enter your current password."),
-    new_password: z.string().min(10, "Use at least 10 characters."),
-    confirm: z.string(),
-  })
-  .refine((v) => v.new_password === v.confirm, { path: ["confirm"], message: "Passwords do not match." });
 
 export default function ProfilePage() {
   const { user, reload } = useAuth();
@@ -144,43 +138,3 @@ function StudentContact() {
   );
 }
 
-function PasswordCard({ onChanged }) {
-  const { register, handleSubmit, formState, reset, setError } = useForm({ resolver: zodResolver(passwordSchema) });
-  async function onSubmit(values) {
-    try {
-      await api.post("/auth/password/change/", { current_password: values.current_password, new_password: values.new_password });
-      toast.success("Password changed.");
-      reset({ current_password: "", new_password: "", confirm: "" });
-      onChanged();
-    } catch (error) {
-      if (!applyFieldErrors(error, setError, ["current_password", "new_password"])) toast.error(errorMessage(error));
-    }
-  }
-  return (
-    <Card id="password">
-      <CardHeader>
-        <CardTitle>Change password</CardTitle>
-        <CardDescription>Use at least 10 characters. Avoid common words, personal details or only numbers.</CardDescription>
-      </CardHeader>
-      <CardContent>
-        <form onSubmit={handleSubmit(onSubmit)} className="grid max-w-xl gap-4" noValidate>
-          <Field id="current_password" label="Current password" error={formState.errors.current_password?.message}>
-            {(aria) => <Input type="password" autoComplete="current-password" {...aria} {...register("current_password")} />}
-          </Field>
-          <Field id="new_password" label="New password" error={formState.errors.new_password?.message}>
-            {(aria) => <Input type="password" autoComplete="new-password" {...aria} {...register("new_password")} />}
-          </Field>
-          <Field id="confirm" label="Confirm new password" error={formState.errors.confirm?.message}>
-            {(aria) => <Input type="password" autoComplete="new-password" {...aria} {...register("confirm")} />}
-          </Field>
-          <div>
-            <Button type="submit" disabled={formState.isSubmitting}>
-              {formState.isSubmitting && <Loader2 className="animate-spin" />}
-              Change password
-            </Button>
-          </div>
-        </form>
-      </CardContent>
-    </Card>
-  );
-}

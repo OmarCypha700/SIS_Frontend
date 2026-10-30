@@ -9,10 +9,10 @@ import { playNotificationSound, unlockSoundOnInteraction } from "@/lib/notificat
 import { setBadge } from "@/lib/push";
 
 const NotificationContext = createContext(null);
-const POLL_MS = 60 * 1000;
+const POLL_MS = 2 * 60 * 1000;
 
 /**
- * Unread count for the bell and the app-icon badge. Refreshed every minute, when the window
+ * Unread count for the bell and the app-icon badge. Refreshed every two minutes, when the window
  * regains focus, and immediately when the service worker receives a push. A rising count plays
  * the notification sound (if the person has it switched on).
  */
@@ -49,7 +49,7 @@ export function NotificationProvider({ children }) {
   useEffect(() => unlockSoundOnInteraction(), []);
 
   useEffect(() => {
-    if (!user) return undefined;
+    if (!user || user.must_change_password) return undefined;
     const first = window.setTimeout(refresh, 0);
     const timer = window.setInterval(() => {
       if (document.visibilityState === "visible") refresh();
