@@ -74,6 +74,12 @@ export function useAuth() {
   return context;
 }
 
+/**
+ * Whether the person acts in any of these roles now: their own role, Lecturer for staff who can
+ * teach, or an office they currently hold through an appointment (`user.roles` from the server).
+ */
 export function hasRole(user, ...roles) {
-  return Boolean(user && roles.includes(user.role));
+  if (!user) return false;
+  const held = user.roles?.length ? user.roles : [user.role];
+  return held.some((role) => roles.includes(role));
 }

@@ -24,8 +24,8 @@ import {
 import { Sheet, SheetContent, SheetHeader, SheetTitle } from "@/components/ui/sheet";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip";
-import { ROLE_LABELS } from "@/lib/format";
-import { navForRole } from "@/lib/navigation";
+import { capacityLabel } from "@/lib/format";
+import { navForUser } from "@/lib/navigation";
 import { useInstallPrompt, useStandalone } from "@/lib/pwa";
 import { saveSidebarCollapsed } from "@/lib/sidebar";
 import { cn } from "@/lib/utils";
@@ -189,7 +189,7 @@ function parseCollapsed(snapshot) {
 function SidebarContent({ onNavigate, rail = false }) {
   const { user, institution } = useAuth();
   const pathname = usePathname();
-  const sections = navForRole(user.role);
+  const sections = navForUser(user);
   const allHrefs = sections.flatMap((s) => s.items.map((i) => i.href));
   const collapsedSnapshot = useSyncExternalStore(subscribeCollapsed, readCollapsedSnapshot, () => "[]");
   const collapsed = useMemo(() => parseCollapsed(collapsedSnapshot), [collapsedSnapshot]);
@@ -384,7 +384,7 @@ function TopBar({ onMenu, railed, onToggleRail }) {
             <DropdownMenuLabel className="font-normal">
               <p className="truncate text-sm font-medium">{user.full_name}</p>
               <p className="truncate text-xs text-muted-foreground">{user.email}</p>
-              <p className="mt-1 text-xs text-muted-foreground">{ROLE_LABELS[user.role]}</p>
+              <p className="mt-1 text-xs text-muted-foreground">{capacityLabel(user)}</p>
             </DropdownMenuLabel>
             <DropdownMenuSeparator />
             <DropdownMenuItem asChild>

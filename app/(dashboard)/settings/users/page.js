@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { KeyRound, Loader2, Power, PowerOff, Trash2, Upload } from "lucide-react";
+import { BadgeCheck, KeyRound, Loader2, Power, PowerOff, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog, StatusBadge } from "@/components/common";
@@ -35,7 +35,7 @@ const FIELDS = [
     name: "can_issue_transcripts",
     label: "Can issue official transcripts",
     type: "checkbox",
-    hint: "Issue, reprint and revoke numbered transcripts. Administrators and registrars only; on by default for administrators.",
+    hint: "Issue, reprint and revoke numbered transcripts. Administrators and registrars (including appointed registrars) only; on by default for administrators.",
   },
   { name: "password", label: "Temporary password", inputType: "password", hint: "Required for new accounts. The user must change it at first sign-in.", span: 2 },
 ];
@@ -52,7 +52,20 @@ const COLUMNS = [
       </>
     ),
   },
-  { key: "role_display", header: "Role" },
+  {
+    key: "role_display",
+    header: "Role",
+    cell: (r) => (
+      <>
+        {r.role_display}
+        {r.offices?.map((office) => (
+          <span key={office.id} className="block text-xs text-muted-foreground">
+            {office.title}
+          </span>
+        ))}
+      </>
+    ),
+  },
   {
     key: "caps",
     header: "Permissions",
@@ -110,7 +123,7 @@ export default function UsersPage() {
     <>
       <ResourcePage
         title="Staff accounts"
-        description="Create staff accounts, assign roles and grant result permissions. Student accounts are created from student records."
+        description="One account per person. Give each their own role here; offices such as Registrar or Results Officer held for a period are recorded under Appointments. Student accounts are created from student records."
         endpoint="/users/"
         columns={COLUMNS}
         fields={FIELDS}
@@ -140,6 +153,11 @@ export default function UsersPage() {
         }
         rowActions={(row) => (
           <>
+            <DropdownMenuItem asChild>
+              <Link href={`/settings/appointments?user=${row.id}`}>
+                <BadgeCheck /> Appointments
+              </Link>
+            </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setPasswordFor(row)}>
               <KeyRound /> Set temporary password
             </DropdownMenuItem>

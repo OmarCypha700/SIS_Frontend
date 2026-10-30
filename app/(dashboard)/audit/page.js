@@ -6,17 +6,29 @@ import { PageHeader, RoleGate } from "@/components/common";
 import { DataTable } from "@/components/tables/data-table";
 import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
-import { formatDateTime } from "@/lib/format";
+import { formatDateTime, ROLE_LABELS } from "@/lib/format";
 
-const ACTION_OPTIONS = ["auth.", "user.", "student.", "registration.", "results.", "marks.", "assessment.", "institution.", "semester.", "course"].map(
+const ACTION_OPTIONS = ["auth.", "user.", "appointment.", "student.", "registration.", "results.", "marks.", "assessment.", "institution.", "semester.", "course"].map(
   (value) => ({ value, label: value.replace(/\.$/, "") }),
 );
+
+// "Everything done as Registrar", including acting holders, whoever held the office then.
+const CAPACITY_OPTIONS = ["ADMIN", "REGISTRAR", "RESULTS_OFFICER", "LECTURER"].map((value) => ({ value, label: ROLE_LABELS[value] }));
 
 export default function AuditLogPage() {
   const [selected, setSelected] = useState(null);
   const columns = [
     { key: "created_at", header: "When", sortKey: "created_at", cell: (r) => <span className="whitespace-nowrap">{formatDateTime(r.created_at)}</span> },
-    { key: "actor", header: "Who", cell: (r) => r.actor_email || "System" },
+    {
+      key: "actor",
+      header: "Who",
+      cell: (r) => (
+        <>
+          {r.actor_email || "System"}
+          {r.actor_capacity && <span className="block text-xs text-muted-foreground">as {r.actor_capacity}</span>}
+        </>
+      ),
+    },
     { key: "action", header: "Action", cell: (r) => <code className="text-xs">{r.action}</code> },
     { key: "summary", header: "Summary", className: "max-w-96", cell: (r) => <span className="line-clamp-2">{r.summary}</span> },
     {
@@ -38,7 +50,10 @@ export default function AuditLogPage() {
         columns={columns}
         defaultOrdering="-created_at"
         searchPlaceholder="Search summary, user or record id…"
-        filters={[{ key: "action", label: "Area", options: ACTION_OPTIONS }]}
+        filters={[
+          { key: "action", label: "Area", options: ACTION_OPTIONS },
+          { key: "actor_role", label: "Acting as", options: CAPACITY_OPTIONS },
+        ]}
         pageSize={50}
       />
       <Dialog open={selected !== null} onOpenChange={(open) => !open && setSelected(null)}>
@@ -46,7 +61,7 @@ export default function AuditLogPage() {
           <DialogHeader>
             <DialogTitle>{selected?.action}</DialogTitle>
             <DialogDescription>
-              {selected && `${formatDateTime(selected.created_at)} · ${selected.actor_email || "System"} · ${selected.entity_type} #${selected.entity_id}`}
+              {selected && `${formatDateTime(selected.created_at)} · ${selected.actor_email || "System"}${selected.actor_capacity ? ` (${selected.actor_capacity})` : ""} · ${selected.entity_type} #${selected.entity_id}`}
             </DialogDescription>
           </DialogHeader>
           {selected && (

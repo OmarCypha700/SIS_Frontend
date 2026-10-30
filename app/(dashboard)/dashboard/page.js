@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import {
-  AlertTriangle, BookOpen, CalendarClock, CheckCircle2, ClipboardCheck, FilePen, GraduationCap, ListChecks, Mail, Users,
+  AlertTriangle, BadgeCheck, BookOpen, CalendarClock, CheckCircle2, ClipboardCheck, FilePen, GraduationCap, ListChecks, Mail, Users,
 } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
@@ -28,6 +28,12 @@ export default function DashboardPage() {
       {data?.kind === "registry" && <RegistryDashboard data={data} />}
       {user.role === "ADMIN" && <DeliveryCard />}
       {data?.kind === "results_officer" && <OfficerDashboard data={data} />}
+      {data?.teaching && (
+        <div className="mt-6">
+          <TeachingCard courses={data.teaching} title="Courses I teach this semester" />
+        </div>
+      )}
+      {data?.appointments_review?.length > 0 && <AppointmentsReviewCard items={data.appointments_review} />}
       {data?.kind === "lecturer" && <LecturerDashboard data={data} />}
       {data?.kind === "student" && <StudentDashboard data={data} />}
     </>
@@ -299,12 +305,19 @@ function LecturerDashboard({ data }) {
         <StatCard label="Need marks or resubmission" value={t.draft + t.returned} hint={`${t.returned} returned for correction`} icon={AlertTriangle} />
         <StatCard label="Published" value={t.published} hint={`${t.submitted} submitted for review`} icon={CheckCircle2} />
       </div>
+      <TeachingCard courses={data.courses} title="My courses this semester" />
+    </div>
+  );
+}
+
+function TeachingCard({ courses, title }) {
+  return (
       <Card>
         <CardHeader>
-          <CardTitle>My courses this semester</CardTitle>
+          <CardTitle>{title}</CardTitle>
         </CardHeader>
         <CardContent className="px-0">
-          {data.courses.length === 0 ? (
+          {courses.length === 0 ? (
             <EmptyState title="No assigned courses" description="Courses assigned to you by the registry will appear here." />
           ) : (
             <div className="overflow-x-auto">
@@ -319,7 +332,7 @@ function LecturerDashboard({ data }) {
                   </TableRow>
                 </TableHeader>
                 <TableBody>
-                  {data.courses.map((course) => (
+                  {courses.map((course) => (
                     <TableRow key={course.offering}>
                       <TableCell className="pl-6">
                         <p className="font-medium">{course.course_code}</p>
@@ -348,7 +361,39 @@ function LecturerDashboard({ data }) {
           )}
         </CardContent>
       </Card>
-    </div>
+  );
+}
+
+/** Administrators: open-ended appointments held for over a year, and ones ending soon. */
+function AppointmentsReviewCard({ items }) {
+  return (
+    <Card className="mt-6">
+      <CardHeader>
+        <CardTitle className="flex items-center gap-2">
+          <BadgeCheck className="size-4" /> Appointments to review
+        </CardTitle>
+        <CardDescription>Confirm who holds each office, or record when the appointment ends.</CardDescription>
+      </CardHeader>
+      <CardContent>
+        <ul className="space-y-2 text-sm">
+          {items.map((item) => (
+            <li key={`${item.reason}-${item.id}`} className="flex flex-wrap items-center justify-between gap-2">
+              <span>
+                <span className="font-medium">{item.name}</span>, {item.title}
+                <span className="block text-xs text-muted-foreground">
+                  {item.reason === "open_ended"
+                    ? `Since ${formatDate(item.starts_on)} with no end date`
+                    : `Ends ${formatDate(item.ends_on)}`}
+                </span>
+              </span>
+              <Button asChild size="sm" variant="outline">
+                <Link href={`/settings/appointments?user=${item.user}`}>Review</Link>
+              </Button>
+            </li>
+          ))}
+        </ul>
+      </CardContent>
+    </Card>
   );
 }
 

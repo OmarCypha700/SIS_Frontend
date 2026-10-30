@@ -19,14 +19,14 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { useApi } from "@/hooks/use-api";
 import { api, applyFieldErrors, errorMessage } from "@/lib/api";
-import { ROLE_LABELS } from "@/lib/format";
+import { capacityLabel, formatDate, ROLE_LABELS } from "@/lib/format";
 
 
 export default function ProfilePage() {
   const { user, reload } = useAuth();
   return (
     <div className="space-y-6">
-      <PageHeader title="My account" description={`${user.full_name} · ${ROLE_LABELS[user.role]}`} />
+      <PageHeader title="My account" description={`${user.full_name} · ${capacityLabel(user)}`} />
       <Card>
         <CardHeader>
           <CardTitle>Account</CardTitle>
@@ -39,6 +39,10 @@ export default function ProfilePage() {
               { label: "Name", value: user.full_name },
               { label: "Email", value: user.email },
               { label: "Role", value: ROLE_LABELS[user.role] },
+              ...(user.offices || []).map((office) => ({
+                label: "Office",
+                value: `${office.title} since ${formatDate(office.starts_on)}${office.ends_on ? `, until ${formatDate(office.ends_on)}` : ""}`,
+              })),
               ...(user.student ? [{ label: "Student number", value: user.student.student_number }, { label: "Programme", value: user.student.programme }] : []),
             ]}
           />
