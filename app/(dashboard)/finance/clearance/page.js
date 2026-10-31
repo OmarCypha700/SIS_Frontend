@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { BadgeCheck, Ban, Download, FileUp, Loader2, X } from "lucide-react";
+import { AlertTriangle, BadgeCheck, Ban, CheckCircle2, Download, FileUp, Loader2, Users, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { hasRole, useAuth } from "@/components/auth/auth-provider";
@@ -80,9 +80,9 @@ export default function FinancialClearancePage() {
       )}
       {summary && (
         <div className="mb-6 grid gap-4 sm:grid-cols-3">
-          <StatCard label={`Students who may register · ${summary.semester.name}`} value={summary.total} />
-          <StatCard label="Cleared" value={summary.cleared} />
-          <StatCard label="Not yet cleared" value={summary.not_cleared} />
+          <StatCard label={`Students who may register · ${summary.semester.name}`} value={summary.total} icon={Users} tone="brand" />
+          <StatCard label="Cleared" value={summary.cleared} icon={CheckCircle2} tone="green" />
+          <StatCard label="Not yet cleared" value={summary.not_cleared} icon={AlertTriangle} tone="amber" />
         </div>
       )}
       <DataTable

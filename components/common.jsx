@@ -95,13 +95,44 @@ export function LoadingBlock({ rows = 4, className }) {
   );
 }
 
-export function StatCard({ label, value, hint, icon: Icon, className }) {
+/**
+ * Icon colours carry meaning, matching the status badges: green done or good, amber waiting on someone,
+ * red a problem; brand for plain counts; blue, violet and teal to tell neutral categories apart.
+ */
+const ICON_TONES = {
+  brand: "bg-primary/10 text-primary",
+  green: "bg-emerald-500/10 text-emerald-600 dark:bg-emerald-400/15 dark:text-emerald-400",
+  amber: "bg-amber-500/15 text-amber-600 dark:bg-amber-400/15 dark:text-amber-400",
+  red: "bg-red-500/10 text-red-600 dark:bg-red-400/15 dark:text-red-400",
+  blue: "bg-sky-500/10 text-sky-600 dark:bg-sky-400/15 dark:text-sky-400",
+  violet: "bg-violet-500/10 text-violet-600 dark:bg-violet-400/15 dark:text-violet-400",
+  teal: "bg-teal-500/10 text-teal-600 dark:bg-teal-400/15 dark:text-teal-400",
+};
+
+/** A decorative icon on a soft tinted tile. */
+export function IconTile({ icon: Icon, tone = "brand", size = "default", className }) {
+  return (
+    <span
+      aria-hidden="true"
+      className={cn(
+        "flex shrink-0 items-center justify-center rounded-lg",
+        size === "sm" ? "size-7 [&_svg]:size-4" : "size-9 [&_svg]:size-[18px]",
+        ICON_TONES[tone] || ICON_TONES.brand,
+        className,
+      )}
+    >
+      <Icon />
+    </span>
+  );
+}
+
+export function StatCard({ label, value, hint, icon, tone, className }) {
   return (
     <Card className={cn("gap-0 py-4", className)}>
       <CardContent className="px-4">
         <div className="flex items-start justify-between gap-2">
           <p className="text-sm text-muted-foreground">{label}</p>
-          {Icon && <Icon className="size-4 text-muted-foreground" />}
+          {icon && <IconTile icon={icon} tone={tone} className="-mt-1" />}
         </div>
         <p className="mt-2 text-2xl font-semibold tabular-nums">{value ?? "—"}</p>
         {hint && <p className="mt-1 text-xs text-muted-foreground">{hint}</p>}

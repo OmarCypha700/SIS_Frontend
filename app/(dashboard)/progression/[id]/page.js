@@ -3,7 +3,10 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { CheckCheck, ListRestart, Loader2, MoreHorizontal, Pencil, RefreshCw, TriangleAlert, UserMinus, UserPlus } from "lucide-react";
+import {
+  ArrowUpCircle, CheckCheck, CircleDashed, ListRestart, Loader2, MoreHorizontal, Pencil, RefreshCw, Repeat, ShieldAlert, ShieldCheck,
+  TriangleAlert, UserMinus, UserPlus, UserPen, Users,
+} from "lucide-react";
 import { toast } from "sonner";
 
 import { hasRole, useAuth } from "@/components/auth/auth-provider";
@@ -214,18 +217,18 @@ export default function ProgressionReviewPage() {
           </AlertDescription>
         </Alert>
       )}
-      <div className="mb-6 grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+      <div className="mb-6 grid grid-cols-2 gap-3 lg:grid-cols-4">
         {[
-          ["Students", s.students],
-          ["Good standing", s.good],
-          ["Probation", s.probation],
-          ["Dismissal", s.dismiss],
-          ["Promote", s.promote],
-          ["Repeat level", s.repeat],
-          ["Changed by registry", s.overridden],
-          ["Provisional", s.incomplete],
-        ].map(([label, value]) => (
-          <StatCard key={label} label={label} value={value} />
+          ["Students", s.students, Users, "brand"],
+          ["Good standing", s.good, ShieldCheck, "green"],
+          ["Probation", s.probation, ShieldAlert, "amber"],
+          ["Dismissal", s.dismiss, UserMinus, "red"],
+          ["Promote", s.promote, ArrowUpCircle, "green"],
+          ["Repeat level", s.repeat, Repeat, "amber"],
+          ["Changed by registry", s.overridden, UserPen, "violet"],
+          ["Provisional", s.incomplete, CircleDashed, "blue"],
+        ].map(([label, value, icon, tone]) => (
+          <StatCard key={label} label={label} value={value} icon={icon} tone={tone} />
         ))}
       </div>
       <DataTable

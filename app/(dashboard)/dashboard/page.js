@@ -2,11 +2,12 @@
 
 import Link from "next/link";
 import {
-  AlertTriangle, BadgeCheck, BookOpen, CalendarClock, CheckCircle2, ClipboardCheck, FilePen, GraduationCap, ListChecks, Mail, Users,
+  AlertTriangle, Award, BadgeCheck, BarChart3, BookOpen, CalendarClock, CheckCircle2, ClipboardCheck, ClipboardList, FilePen,
+  GraduationCap, History, Inbox, Layers, ListChecks, ListTodo, Mail, Scale, Sigma, Users,
 } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
-import { EmptyState, ErrorState, LoadingBlock, PageHeader, StatCard, StatusBadge } from "@/components/common";
+import { EmptyState, ErrorState, IconTile, LoadingBlock, PageHeader, StatCard, StatusBadge } from "@/components/common";
 import { BarList } from "@/components/dashboard/bar-list";
 import { StudentPhoto } from "@/components/students/student-photo";
 import { Button } from "@/components/ui/button";
@@ -46,7 +47,9 @@ function SemesterCard({ semester }) {
     return (
       <Card>
         <CardHeader>
-          <CardTitle>Academic period</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <IconTile icon={CalendarClock} tone="blue" size="sm" /> Academic period
+          </CardTitle>
           <CardDescription>No current semester has been set.</CardDescription>
         </CardHeader>
       </Card>
@@ -63,7 +66,7 @@ function SemesterCard({ semester }) {
     <Card>
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <CalendarClock className="size-4" /> Academic period
+          <IconTile icon={CalendarClock} tone="blue" size="sm" /> Academic period
         </CardTitle>
         <CardDescription>
           {semester.registration_open ? "Registration is open." : "Registration is closed."}
@@ -93,7 +96,7 @@ function DeliveryCard() {
     <Card className="mt-6">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <Mail className="size-5" /> Notification delivery
+          <IconTile icon={Mail} tone="violet" size="sm" /> Notification delivery
         </CardTitle>
         <CardDescription>
           Email uses the daily allowance of your email provider ({email.limit} per day, {email.security_reserve} kept for
@@ -134,7 +137,7 @@ function SignoffBlockedCard({ items }) {
     <Card className="border-destructive/40">
       <CardHeader>
         <CardTitle className="flex items-center gap-2 text-destructive">
-          <AlertTriangle className="size-5" /> Sign-off needs attention
+          <IconTile icon={AlertTriangle} tone="red" size="sm" /> Sign-off needs attention
         </CardTitle>
         <CardDescription>
           No one other than the submitter can take the next step for these results. Give another person the permission
@@ -165,25 +168,29 @@ function RegistryDashboard({ data }) {
     <div className="space-y-6">
       <SignoffBlockedCard items={data.signoff_blocked} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Active students" value={data.students.active} hint={`${data.students.total} records in total`} icon={Users} />
+        <StatCard label="Active students" value={data.students.active} hint={`${data.students.total} records in total`} icon={Users} tone="brand" />
         <StatCard
           label="Registered this semester"
           value={reg ? reg.registered : "—"}
           hint={reg ? `${reg.not_registered} eligible students not yet registered` : "No current semester"}
           icon={ClipboardCheck}
+          tone="green"
         />
-        <StatCard label="Course offerings" value={data.offerings} hint="In the current semester" icon={BookOpen} />
+        <StatCard label="Course offerings" value={data.offerings} hint="In the current semester" icon={BookOpen} tone="blue" />
         <StatCard
           label="Results awaiting approval"
           value={results.SUBMITTED}
           hint={`${results.APPROVED || 0} approved, awaiting publication`}
           icon={ListChecks}
+          tone="amber"
         />
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Active students by programme</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <IconTile icon={BarChart3} tone="brand" size="sm" /> Active students by programme
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <BarList
@@ -197,7 +204,9 @@ function RegistryDashboard({ data }) {
       <div className="grid gap-4 lg:grid-cols-3">
         <Card>
           <CardHeader>
-            <CardTitle>Active students by level</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <IconTile icon={Layers} tone="teal" size="sm" /> Active students by level
+            </CardTitle>
           </CardHeader>
           <CardContent>
             <BarList items={data.students.by_level.map((l) => ({ label: l.current_level__name, value: l.count }))} empty="No data yet." />
@@ -205,7 +214,9 @@ function RegistryDashboard({ data }) {
         </Card>
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Outstanding work</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <IconTile icon={ListTodo} tone="amber" size="sm" /> Outstanding work
+            </CardTitle>
           </CardHeader>
           <CardContent className="grid gap-3 sm:grid-cols-2">
             <TaskLink href="/registrations" label="Registrations awaiting approval" count={reg?.pending} />
@@ -219,7 +230,9 @@ function RegistryDashboard({ data }) {
       {data.recent_activity && (
         <Card>
           <CardHeader>
-            <CardTitle>Recent administrative activity</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <IconTile icon={History} tone="violet" size="sm" /> Recent administrative activity
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {data.recent_activity.length === 0 ? (
@@ -258,15 +271,17 @@ function OfficerDashboard({ data }) {
     <div className="space-y-6">
       <SignoffBlockedCard items={data.signoff_blocked} />
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Awaiting review" value={results.SUBMITTED} icon={ListChecks} />
-        <StatCard label="Approved, unpublished" value={results.APPROVED} icon={CheckCircle2} />
-        <StatCard label="Returned for correction" value={results.RETURNED} icon={AlertTriangle} />
-        <StatCard label="Pending amendments" value={data.pending_amendments} icon={FilePen} />
+        <StatCard label="Awaiting review" value={results.SUBMITTED} icon={ListChecks} tone="amber" />
+        <StatCard label="Approved, unpublished" value={results.APPROVED} icon={CheckCircle2} tone="blue" />
+        <StatCard label="Returned for correction" value={results.RETURNED} icon={AlertTriangle} tone="red" />
+        <StatCard label="Pending amendments" value={data.pending_amendments} icon={FilePen} tone="violet" />
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader>
-            <CardTitle>Oldest submissions awaiting review</CardTitle>
+            <CardTitle className="flex items-center gap-2">
+              <IconTile icon={Inbox} tone="amber" size="sm" /> Oldest submissions awaiting review
+            </CardTitle>
           </CardHeader>
           <CardContent>
             {data.awaiting_review.length === 0 ? (
@@ -301,10 +316,10 @@ function LecturerDashboard({ data }) {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Assigned courses" value={t.courses} icon={BookOpen} />
-        <StatCard label="Students taught" value={t.students} icon={Users} />
-        <StatCard label="Need marks or resubmission" value={t.draft + t.returned} hint={`${t.returned} returned for correction`} icon={AlertTriangle} />
-        <StatCard label="Published" value={t.published} hint={`${t.submitted} submitted for review`} icon={CheckCircle2} />
+        <StatCard label="Assigned courses" value={t.courses} icon={BookOpen} tone="brand" />
+        <StatCard label="Students taught" value={t.students} icon={Users} tone="blue" />
+        <StatCard label="Need marks or resubmission" value={t.draft + t.returned} hint={`${t.returned} returned for correction`} icon={AlertTriangle} tone="amber" />
+        <StatCard label="Published" value={t.published} hint={`${t.submitted} submitted for review`} icon={CheckCircle2} tone="green" />
       </div>
       <TeachingCard courses={data.courses} title="My courses this semester" />
     </div>
@@ -315,7 +330,9 @@ function TeachingCard({ courses, title }) {
   return (
       <Card>
         <CardHeader>
-          <CardTitle>{title}</CardTitle>
+          <CardTitle className="flex items-center gap-2">
+            <IconTile icon={BookOpen} tone="brand" size="sm" /> {title}
+          </CardTitle>
         </CardHeader>
         <CardContent className="px-0">
           {courses.length === 0 ? (
@@ -372,9 +389,9 @@ function AccountsDashboard({ data }) {
   return (
     <div className="space-y-6">
       <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Students who may register" value={c.eligible} icon={Users} />
-        <StatCard label="Financially cleared" value={c.cleared} icon={CheckCircle2} />
-        <StatCard label="Not yet cleared" value={c.not_cleared} icon={AlertTriangle} />
+        <StatCard label="Students who may register" value={c.eligible} icon={Users} tone="brand" />
+        <StatCard label="Financially cleared" value={c.cleared} icon={CheckCircle2} tone="green" />
+        <StatCard label="Not yet cleared" value={c.not_cleared} icon={AlertTriangle} tone="amber" />
       </div>
       <Button asChild>
         <Link href="/finance/clearance">Open financial clearance</Link>
@@ -389,7 +406,7 @@ function AppointmentsReviewCard({ items }) {
     <Card className="mt-6">
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
-          <BadgeCheck className="size-4" /> Appointments to review
+          <IconTile icon={BadgeCheck} tone="amber" size="sm" /> Appointments to review
         </CardTitle>
         <CardDescription>Confirm who holds each office, or record when the appointment ends.</CardDescription>
       </CardHeader>
@@ -436,20 +453,24 @@ function StudentDashboard({ data }) {
         </CardContent>
       </Card>
       <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Programme" value={<span className="text-base">{s.programme}</span>} hint={s.programme_code} icon={GraduationCap} />
-        <StatCard label="Current level" value={s.level} hint={<StatusBadge status={s.status} label={s.status_display} />} />
-        <StatCard label="CGPA" value={data.results?.cgpa ?? "—"} hint="Published results only" />
+        <StatCard label="Programme" value={<span className="text-base">{s.programme}</span>} hint={s.programme_code} icon={GraduationCap} tone="brand" />
+        <StatCard label="Current level" value={s.level} hint={<StatusBadge status={s.status} label={s.status_display} />} icon={Layers} tone="teal" />
+        <StatCard label="CGPA" value={data.results?.cgpa ?? "—"} hint="Published results only" icon={Scale} tone="violet" />
         <StatCard
           label="Credits earned"
           value={data.results?.credits_earned ?? "—"}
           hint={data.results?.required_credits ? `of ${data.results.required_credits} required` : undefined}
+          icon={Sigma}
+          tone="blue"
         />
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-start justify-between gap-3">
             <div>
-              <CardTitle>This semester&apos;s registration</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <IconTile icon={ClipboardList} tone="blue" size="sm" /> This semester&apos;s registration
+              </CardTitle>
               <CardDescription>{semester ? semester.label : "No current semester"}</CardDescription>
             </div>
             {reg && <StatusBadge status={reg.status} label={reg.status_display} />}
@@ -495,7 +516,9 @@ function StudentDashboard({ data }) {
         <Card>
           <CardHeader className="flex flex-row items-center justify-between">
             <div>
-              <CardTitle>Latest published results</CardTitle>
+              <CardTitle className="flex items-center gap-2">
+                <IconTile icon={Award} tone="green" size="sm" /> Latest published results
+              </CardTitle>
               <CardDescription>
                 {data.results.latest.academic_year} · {data.results.latest.semester} — GPA {data.results.latest.gpa}
               </CardDescription>

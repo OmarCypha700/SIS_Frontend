@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { CheckCheck, ListPlus, XCircle } from "lucide-react";
+import { CheckCheck, ClipboardCheck, Hourglass, ListPlus, Users, XCircle } from "lucide-react";
 
 import { PageHeader, RoleGate, StatCard, StatusBadge } from "@/components/common";
 import { ExportMenu } from "@/components/export-menu";
@@ -71,9 +71,9 @@ export default function RegistrationsPage() {
       />
       {stats && (
         <div className="mb-6 grid gap-4 sm:grid-cols-3">
-          <StatCard label={`Registered · ${stats.semester.name}`} value={stats.registered} />
-          <StatCard label="Awaiting approval" value={stats.pending} />
-          <StatCard label="Eligible students" value={stats.eligible_students} hint={`${Math.max(stats.eligible_students - stats.registered - stats.pending, 0)} not yet registered`} />
+          <StatCard label={`Registered · ${stats.semester.name}`} value={stats.registered} icon={ClipboardCheck} tone="green" />
+          <StatCard label="Awaiting approval" value={stats.pending} icon={Hourglass} tone="amber" />
+          <StatCard label="Eligible students" value={stats.eligible_students} hint={`${Math.max(stats.eligible_students - stats.registered - stats.pending, 0)} not yet registered`} icon={Users} tone="brand" />
         </div>
       )}
       <DataTable

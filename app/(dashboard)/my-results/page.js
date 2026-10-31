@@ -1,7 +1,7 @@
 "use client";
 
 import Link from "next/link";
-import { FileText } from "lucide-react";
+import { FileText, Scale, ShieldAlert, ShieldCheck, Sigma } from "lucide-react";
 
 import { ErrorState, LoadingBlock, PageHeader, RoleGate, StatCard } from "@/components/common";
 import { AcademicRecord } from "@/components/results/academic-record";
@@ -11,6 +11,7 @@ import { useApi } from "@/hooks/use-api";
 
 export default function MyResultsPage() {
   const { data, error, loading, reload } = useApi("/my-results/");
+  const probation = data?.student.academic_standing === "PROBATION";
   return (
     <RoleGate roles={["STUDENT"]}>
       <PageHeader
@@ -29,12 +30,14 @@ export default function MyResultsPage() {
       {data && (
         <div className="space-y-6">
           <div className="grid gap-4 sm:grid-cols-3">
-            <StatCard label="Cumulative GPA" value={data.summary.cgpa ?? "—"} />
-            <StatCard label="Credits earned" value={data.summary.credits_earned} hint={data.summary.required_credits ? `of ${data.summary.required_credits} required` : undefined} />
+            <StatCard label="Cumulative GPA" value={data.summary.cgpa ?? "—"} icon={Scale} tone="violet" />
+            <StatCard label="Credits earned" value={data.summary.credits_earned} hint={data.summary.required_credits ? `of ${data.summary.required_credits} required` : undefined} icon={Sigma} tone="blue" />
             <StatCard
               label="Academic standing"
-              value={data.student.academic_standing === "PROBATION" ? "Probation" : "Good standing"}
+              value={probation ? "Probation" : "Good standing"}
               hint={`${data.summary.credits_attempted} credits attempted`}
+              icon={probation ? ShieldAlert : ShieldCheck}
+              tone={probation ? "amber" : "green"}
             />
           </div>
           <MyResits />
