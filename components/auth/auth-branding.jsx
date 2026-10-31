@@ -2,21 +2,28 @@
 
 import { useApi } from "@/hooks/use-api";
 
+/** Institution logo with its full name underneath; long names wrap instead of being cut off. */
 export function AuthBranding() {
   const { data } = useApi("/institution/");
+  const name = data?.name || "Student Information System";
   return (
-    <div className="mb-8 flex items-center gap-3" style={data?.primary_color ? { "--primary": data.primary_color } : undefined}>
+    <div
+      className="mb-8 flex flex-col items-center gap-3 border-b pb-6 text-center"
+      style={data?.primary_color ? { "--primary": data.primary_color } : undefined}
+    >
       {data?.logo ? (
         // eslint-disable-next-line @next/next/no-img-element
-        <img src={data.logo} alt="" className="size-10 rounded object-contain" />
+        <img src={data.logo} alt="" className="size-16 rounded-lg object-contain sm:size-20" />
       ) : (
-        <div className="flex size-10 items-center justify-center rounded-lg bg-primary text-sm font-semibold text-primary-foreground">
+        <div className="flex size-16 items-center justify-center rounded-xl bg-primary text-lg font-semibold text-primary-foreground sm:size-20 sm:text-xl">
           {(data?.short_name || "SIS").slice(0, 3)}
         </div>
       )}
-      <div className="min-w-0">
-        <p className="truncate font-semibold leading-tight">{data?.name || "Student Information System"}</p>
-        {data?.motto && <p className="truncate text-xs text-muted-foreground">{data.motto}</p>}
+      <div className="w-full min-w-0">
+        <p className="text-lg font-semibold leading-snug text-balance [overflow-wrap:anywhere] sm:text-xl">{name}</p>
+        {data?.motto && (
+          <p className="mt-1 text-sm text-muted-foreground text-balance [overflow-wrap:anywhere]">{data.motto}</p>
+        )}
       </div>
     </div>
   );

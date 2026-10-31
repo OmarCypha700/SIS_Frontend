@@ -7,7 +7,7 @@ export default function AuthLayout({ children }) {
     <div className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col justify-center px-6 py-12 sm:px-12">
         <div className="mx-auto w-full max-w-sm">
-          <Suspense fallback={<div className="mb-8 h-10" />}>
+          <Suspense fallback={<div className="mb-8 h-32 border-b pb-6 sm:h-36" />}>
             <AuthBranding />
           </Suspense>
           <Suspense>{children}</Suspense>
