@@ -1,25 +1,21 @@
 "use client";
 
-import { Printer } from "lucide-react";
-
 import { useAuth } from "@/components/auth/auth-provider";
 import { SemesterResults } from "@/components/results/academic-record";
 import { PdfButton } from "@/components/export-menu";
-import { Button } from "@/components/ui/button";
 import { formatDate } from "@/lib/format";
 
-/** Academic record as a printable page, with a server-generated PDF download (`pdfUrl`). */
+/** Academic record on screen, with a server-generated PDF (`pdfUrl`) for printing and sharing. */
 export function Transcript({ record, title = "Academic record", unofficial = true, pdfUrl, pdfParams }) {
   const { institution } = useAuth();
   const s = record.student;
   return (
     <div className="mx-auto max-w-4xl">
-      <div className="mb-4 flex justify-end gap-2 print:hidden">
-        <Button variant="outline" onClick={() => window.print()}>
-          <Printer /> Print
-        </Button>
-        {pdfUrl && <PdfButton url={pdfUrl} params={pdfParams} filename={`transcript-${s.student_number}.pdf`} />}
-      </div>
+      {pdfUrl && (
+        <div className="mb-4 flex justify-end print:hidden">
+          <PdfButton url={pdfUrl} params={pdfParams} filename={`transcript-${s.student_number}.pdf`} />
+        </div>
+      )}
       <article className="space-y-6 rounded-xl border bg-card p-6 print:border-0 print:p-0">
         <header className="flex flex-col gap-1 border-b pb-4 text-center">
           <p className="text-lg font-semibold">{institution?.name}</p>

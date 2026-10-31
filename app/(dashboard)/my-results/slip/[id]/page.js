@@ -1,12 +1,10 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { Printer } from "lucide-react";
 
 import { ErrorState, LoadingBlock, RoleGate } from "@/components/common";
 import { SemesterResults } from "@/components/results/academic-record";
 import { PdfButton } from "@/components/export-menu";
-import { Button } from "@/components/ui/button";
 import { useApi } from "@/hooks/use-api";
 import { formatDate } from "@/lib/format";
 
@@ -20,10 +18,7 @@ export default function ResultSlipPage() {
       {error && <ErrorState error={error} onRetry={reload} />}
       {data && (
         <div className="mx-auto max-w-3xl">
-          <div className="mb-4 flex justify-end gap-2 print:hidden">
-            <Button variant="outline" onClick={() => window.print()}>
-              <Printer /> Print
-            </Button>
+          <div className="mb-4 flex justify-end print:hidden">
             <PdfButton url="/my-results/slip-pdf/" params={{ semester: id }} filename="result-slip.pdf" />
           </div>
           <article className="space-y-5 rounded-xl border bg-card p-6 print:border-0 print:p-0">

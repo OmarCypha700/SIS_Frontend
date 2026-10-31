@@ -1,13 +1,11 @@
 "use client";
 
 import { useParams } from "next/navigation";
-import { Printer } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
 import { ErrorState, LoadingBlock, StatusBadge } from "@/components/common";
 import { RegisteredCourses } from "@/components/registration/registration-detail";
 import { PdfButton } from "@/components/export-menu";
-import { Button } from "@/components/ui/button";
 import { useApi } from "@/hooks/use-api";
 import { formatDateTime } from "@/lib/format";
 
@@ -21,10 +19,7 @@ export default function RegistrationSlipPage() {
 
   return (
     <div className="mx-auto max-w-3xl">
-      <div className="mb-4 flex justify-end gap-2 print:hidden">
-        <Button variant="outline" onClick={() => window.print()}>
-          <Printer /> Print
-        </Button>
+      <div className="mb-4 flex justify-end print:hidden">
         <PdfButton url={`/registrations/${id}/slip-pdf/`} filename="registration-slip.pdf" />
       </div>
       <article className="space-y-6 rounded-xl border bg-card p-6 print:border-0 print:p-0">
