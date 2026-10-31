@@ -12,6 +12,7 @@ import { Field } from "@/components/forms/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { api, ensureCsrf, errorMessage } from "@/lib/api";
 
 const schema = z.object({
@@ -62,7 +63,7 @@ export function LoginForm() {
           {(aria) => <Input type="email" autoComplete="username" autoFocus {...aria} {...register("email")} />}
         </Field>
         <Field id="password" label="Password" error={formState.errors.password?.message}>
-          {(aria) => <Input type="password" autoComplete="current-password" {...aria} {...register("password")} />}
+          {(aria) => <PasswordInput autoComplete="current-password" {...aria} {...register("password")} />}
         </Field>
         <Button type="submit" className="w-full" size="lg" disabled={formState.isSubmitting}>
           {formState.isSubmitting && <Loader2 className="animate-spin" />}

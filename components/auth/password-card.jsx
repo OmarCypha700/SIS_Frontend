@@ -9,7 +9,7 @@ import { toast } from "sonner";
 import { Field } from "@/components/forms/field";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { api, applyFieldErrors, errorMessage } from "@/lib/api";
 
 const passwordSchema = z
@@ -47,13 +47,13 @@ export function PasswordCard({ onChanged, title = "Change password", description
       <CardContent>
         <form onSubmit={handleSubmit(onSubmit)} className="grid max-w-xl gap-4" noValidate>
           <Field id="current_password" label={currentLabel} error={formState.errors.current_password?.message}>
-            {(aria) => <Input type="password" autoComplete="current-password" {...aria} {...register("current_password")} />}
+            {(aria) => <PasswordInput autoComplete="current-password" {...aria} {...register("current_password")} />}
           </Field>
           <Field id="new_password" label="New password" error={formState.errors.new_password?.message}>
-            {(aria) => <Input type="password" autoComplete="new-password" {...aria} {...register("new_password")} />}
+            {(aria) => <PasswordInput autoComplete="new-password" {...aria} {...register("new_password")} />}
           </Field>
           <Field id="confirm" label="Confirm new password" error={formState.errors.confirm?.message}>
-            {(aria) => <Input type="password" autoComplete="new-password" {...aria} {...register("confirm")} />}
+            {(aria) => <PasswordInput autoComplete="new-password" {...aria} {...register("confirm")} />}
           </Field>
           <div>
             <Button type="submit" disabled={formState.isSubmitting}>

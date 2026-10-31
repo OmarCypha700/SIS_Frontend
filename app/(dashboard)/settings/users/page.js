@@ -13,7 +13,7 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { DeleteRecordDialog } from "@/components/delete-record-dialog";
 import { DropdownMenuItem, DropdownMenuSeparator } from "@/components/ui/dropdown-menu";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { api, errorMessage, fieldErrors } from "@/lib/api";
 import { formatDateTime, ROLE_LABELS } from "@/lib/format";
 
@@ -244,7 +244,7 @@ function SetPasswordDialog({ user, onClose }) {
           <DialogDescription>{user.full_name} will be asked to choose a new password after signing in.</DialogDescription>
         </DialogHeader>
         <Field id="temp-password" label="Temporary password" error={error}>
-          <Input id="temp-password" type="password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
+          <PasswordInput id="temp-password" autoComplete="new-password" value={password} onChange={(e) => setPassword(e.target.value)} />
         </Field>
         <DialogFooter>
           <Button variant="outline" onClick={onClose}>

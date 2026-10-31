@@ -11,7 +11,7 @@ import { CheckCircle2, Loader2 } from "lucide-react";
 import { Field } from "@/components/forms/field";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { api, errorMessage, fieldErrors } from "@/lib/api";
 
 const schema = z
@@ -75,10 +75,10 @@ export default function ResetPasswordPage() {
           </Alert>
         )}
         <Field id="new_password" label="New password" error={formState.errors.new_password?.message}>
-          {(aria) => <Input type="password" autoComplete="new-password" {...aria} {...register("new_password")} />}
+          {(aria) => <PasswordInput autoComplete="new-password" {...aria} {...register("new_password")} />}
         </Field>
         <Field id="confirm" label="Confirm password" error={formState.errors.confirm?.message}>
-          {(aria) => <Input type="password" autoComplete="new-password" {...aria} {...register("confirm")} />}
+          {(aria) => <PasswordInput autoComplete="new-password" {...aria} {...register("confirm")} />}
         </Field>
         <Button type="submit" className="w-full" disabled={formState.isSubmitting}>
           {formState.isSubmitting && <Loader2 className="animate-spin" />}

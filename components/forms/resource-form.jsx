@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
+import { PasswordInput } from "@/components/ui/password-input";
 import { Textarea } from "@/components/ui/textarea";
 import { useApi } from "@/hooks/use-api";
 import { api, applyFieldErrors, errorMessage } from "@/lib/api";
@@ -151,7 +152,11 @@ function FieldControl({ field, register, control, error }) {
           case "multirelation":
             return <MultiRelation field={field} control={control} />;
           default:
-            return <Input type={field.inputType || "text"} {...common} />;
+            return field.inputType === "password" ? (
+              <PasswordInput autoComplete="new-password" {...common} />
+            ) : (
+              <Input type={field.inputType || "text"} {...common} />
+            );
         }
       }}
     </Field>

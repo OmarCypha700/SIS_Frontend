@@ -14,7 +14,7 @@ test("unauthenticated visitors are sent to sign in", async ({ page }) => {
 test("wrong password shows a generic error", async ({ page }) => {
   await open(page, "/login");
   await page.getByLabel("Email").fill(ACCOUNTS.admin);
-  await page.getByLabel("Password").fill("not-the-password");
+  await page.getByLabel("Password", { exact: true }).fill("not-the-password");
   await page.getByRole("button", { name: "Sign in" }).click();
   await expect(page.getByText("Invalid email or password.")).toBeVisible();
 });
