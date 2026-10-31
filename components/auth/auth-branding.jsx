@@ -1,16 +1,13 @@
 "use client";
 
-import { useApi } from "@/hooks/use-api";
+import { useAuthInstitution } from "@/components/auth/auth-institution";
 
 /** Institution logo with its full name underneath; long names wrap instead of being cut off. */
 export function AuthBranding() {
-  const { data } = useApi("/institution/");
+  const data = useAuthInstitution();
   const name = data?.name || "Student Information System";
   return (
-    <div
-      className="mb-8 flex flex-col items-center gap-3 border-b pb-6 text-center"
-      style={data?.primary_color ? { "--primary": data.primary_color } : undefined}
-    >
+    <div className="mb-8 flex flex-col items-center gap-3 border-b pb-6 text-center">
       {data?.logo ? (
         // eslint-disable-next-line @next/next/no-img-element
         <img src={data.logo} alt="" className="size-16 rounded-lg object-contain sm:size-20" />
