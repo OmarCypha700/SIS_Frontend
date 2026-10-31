@@ -23,6 +23,7 @@ export function RegisteredCourses({ registration }) {
             <TableCell>
               {c.course_title}
               {c.is_retake && <Badge variant="outline" className="ml-2">Retake</Badge>}
+              {c.is_repeat && <Badge variant="outline" className="ml-2">Repeat year</Badge>}
             </TableCell>
             <TableCell>{titleCase(c.category)}</TableCell>
             <TableCell className="pr-6 text-right tabular-nums">{c.credits}</TableCell>

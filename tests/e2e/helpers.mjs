@@ -6,6 +6,7 @@ export const ACCOUNTS = {
   admin: "admin@northridge.example",
   registrar: "registrar@northridge.example",
   officer: "exams@northridge.example",
+  accounts: "accounts@northridge.example",
   lecturer: "lecturer@northridge.example",
   student: "student@northridge.example",
 };

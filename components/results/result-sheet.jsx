@@ -2,7 +2,7 @@
 
 import { useEffect, useMemo, useRef, useState } from "react";
 import {
-  CheckCircle2, FilePen, FileUp, Loader2, Plus, RotateCcw, Save, Send, Trash2, Undo2, Upload,
+  CheckCircle2, FilePen, FileUp, Loader2, Plus, RotateCcw, Save, Send, Trash2, Undo2, Upload, UserX,
 } from "lucide-react";
 import Link from "next/link";
 import { SignoffWarnings } from "@/components/results/signoff-warnings";
@@ -32,6 +32,7 @@ export function ResultSheet({ sheet, onChange }) {
   const [amending, setAmending] = useState(null);
   const [openingResit, setOpeningResit] = useState(false);
   const [importing, setImporting] = useState(false);
+  const [excusing, setExcusing] = useState(null);
 
   async function transition(name, comment) {
     try {
@@ -134,7 +135,13 @@ export function ResultSheet({ sheet, onChange }) {
       )}
 
       {sheet.components.length > 0 && (
-        <MarksGrid sheet={sheet} onChange={onChange} editable={p.can_enter_marks} onAmend={p.can_request_amendment ? setAmending : null} />
+        <MarksGrid
+          sheet={sheet}
+          onChange={onChange}
+          editable={p.can_enter_marks}
+          onAmend={p.can_request_amendment ? setAmending : null}
+          onExcuse={p.can_configure ? setExcusing : null}
+        />
       )}
 
       <div className="grid gap-6 lg:grid-cols-2">
@@ -189,6 +196,7 @@ export function ResultSheet({ sheet, onChange }) {
       {amending && <AmendmentDialog sheet={sheet} row={amending} onClose={() => setAmending(null)} />}
       {openingResit && <OpenResitDialog sheet={sheet} onClose={() => setOpeningResit(false)} />}
       {importing && <ImportMarksDialog sheet={sheet} onClose={() => setImporting(false)} onApplied={onChange} />}
+      {excusing && <ExcuseDialog sheet={sheet} row={excusing} onClose={() => setExcusing(null)} onChange={onChange} />}
     </div>
   );
 }
@@ -200,10 +208,11 @@ function SummaryCards({ summary }) {
     ["Missing marks", summary.missing],
     ["Passed", summary.passed],
     ["Failed", summary.failed],
+    ...(summary.incomplete ? [["Incomplete (excused)", summary.incomplete]] : []),
     ["Average", summary.average ?? "—"],
   ];
   return (
-    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-6">
+    <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-7">
       {items.map(([label, value]) => (
         <div key={label} className="rounded-lg border bg-card px-3 py-2">
           <p className="text-xs text-muted-foreground">{label}</p>
@@ -311,7 +320,7 @@ function ComponentsEditor({ sheet, onChange, editable }) {
   );
 }
 
-function MarksGrid({ sheet, onChange, editable, onAmend }) {
+function MarksGrid({ sheet, onChange, editable, onAmend, onExcuse }) {
   const components = sheet.components;
   const [draft, setDraft] = useState({});
   const [rowsSource, setRowsSource] = useState(sheet.rows);
@@ -413,7 +422,7 @@ function MarksGrid({ sheet, onChange, editable, onAmend }) {
                   ))}
                   <TableHead className="text-right">Total</TableHead>
                   <TableHead className="pr-6 text-center">Grade</TableHead>
-                  {onAmend && <TableHead className="pr-6" />}
+                  {(onAmend || onExcuse) && <TableHead className="pr-6" />}
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -424,8 +433,14 @@ function MarksGrid({ sheet, onChange, editable, onAmend }) {
                       <p className="text-xs text-muted-foreground">
                         {row.student_number}
                         {row.is_retake && " · retake"}
+                        {row.is_repeat && " · repeat year"}
                         {row.is_amended && " · amended"}
                       </p>
+                      {row.excused && (
+                        <p className="text-xs text-amber-700 dark:text-amber-400" title={row.excused}>
+                          Excused: {row.excused}
+                        </p>
+                      )}
                     </TableCell>
                     {components.map((c, colIndex) => {
                       const value = valueFor(row, c);
@@ -455,12 +470,20 @@ function MarksGrid({ sheet, onChange, editable, onAmend }) {
                       );
                     })}
                     <TableCell className="text-right tabular-nums">{row.total ?? "—"}</TableCell>
-                    <TableCell className={cn("pr-6 text-center font-semibold", row.is_pass === false && "text-destructive")}>
+                    <TableCell
+                      className={cn("pr-6 text-center font-semibold", row.is_pass === false && "text-destructive")}
+                      title={row.excused ? "Incomplete: excused, completed later by a deferred examination or amendment" : undefined}
+                    >
                       {row.grade ?? "—"}
                     </TableCell>
-                    {onAmend && (
-                      <TableCell className="pr-6 text-right">
-                        {row.result_id && (
+                    {(onAmend || onExcuse) && (
+                      <TableCell className="pr-6 text-right whitespace-nowrap">
+                        {onExcuse && (
+                          <Button size="sm" variant="ghost" onClick={() => onExcuse(row)}>
+                            <UserX /> {row.excused ? "Excused…" : "Excuse"}
+                          </Button>
+                        )}
+                        {onAmend && row.result_id && (
                           <Button size="sm" variant="ghost" onClick={() => onAmend(row)}>
                             <FilePen /> Amend
                           </Button>
@@ -565,6 +588,58 @@ function AmendmentDialog({ sheet, row, onClose }) {
 }
 
 
+/** Excused students get Incomplete instead of a fail, completed later by a deferred examination or amendment. */
+function ExcuseDialog({ sheet, row, onClose, onChange }) {
+  const [reason, setReason] = useState(row.excused || "");
+  const [pending, setPending] = useState(false);
+
+  async function save(excused) {
+    setPending(true);
+    try {
+      const response = await api.post(`/result-sheets/${sheet.id}/excuse/`, { registration: row.registration, reason, excused });
+      onChange(response.data);
+      toast.success(excused ? `${row.student_name} is recorded as Incomplete (excused).` : "Excusal removed.");
+      onClose();
+    } catch (error) {
+      toast.error(errorMessage(error));
+      setPending(false);
+    }
+  }
+
+  return (
+    <Dialog open onOpenChange={(open) => !open && !pending && onClose()}>
+      <DialogContent>
+        <DialogHeader>
+          <DialogTitle>Excuse {row.student_name}?</DialogTitle>
+          <DialogDescription>
+            For a student who could not complete the course for an accepted reason, such as illness at the examination. The
+            course is recorded as <strong>I (Incomplete)</strong>: not a fail, not an attempt and not in the GPA. Keep any marks
+            already entered. It is completed later by a deferred examination (opened with the resit) or by an amendment with
+            the missing marks.
+          </DialogDescription>
+        </DialogHeader>
+        <Field id="excuse-reason" label="Reason" required hint="e.g. medical certificate number, approved absence reference.">
+          <Textarea id="excuse-reason" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} />
+        </Field>
+        <DialogFooter>
+          {row.excused && (
+            <Button variant="outline" className="mr-auto" onClick={() => save(false)} disabled={pending}>
+              Remove excusal
+            </Button>
+          )}
+          <Button variant="outline" onClick={onClose} disabled={pending}>
+            Cancel
+          </Button>
+          <Button onClick={() => save(true)} disabled={pending || !reason.trim()}>
+            {pending && <Loader2 className="animate-spin" />}
+            Record as Incomplete
+          </Button>
+        </DialogFooter>
+      </DialogContent>
+    </Dialog>
+  );
+}
+
 function OpenResitDialog({ sheet, onClose }) {
   const router = useRouter();
   const [deadline, setDeadline] = useState("");
@@ -590,7 +665,8 @@ function OpenResitDialog({ sheet, onClose }) {
           <DialogTitle>Open a resit for {sheet.course_code}</DialogTitle>
           <DialogDescription>
             Failed students who meet the academic regulations become eligible. They register for the resit before the deadline,
-            then the lecturer enters resit scores, which go through approval and publication like ordinary results.
+            then the lecturer enters resit scores, which go through approval and publication like ordinary results. Students
+            recorded as Incomplete (excused) are added automatically to sit a deferred examination, which is not capped.
           </DialogDescription>
         </DialogHeader>
         <Field id="resit-deadline" label="Registration deadline" hint="Optional. Registry staff can still register students afterwards.">

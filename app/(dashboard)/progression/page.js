@@ -16,7 +16,16 @@ import { api, errorMessage } from "@/lib/api";
 import { formatDateTime } from "@/lib/format";
 
 const COLUMNS = [
-  { key: "semester_name", header: "Semester", cell: (r) => <span className="font-medium">{r.semester_name}</span> },
+  {
+    key: "semester_name",
+    header: "Semester",
+    cell: (r) => (
+      <span className="font-medium">
+        {r.semester_name}
+        {r.is_follow_up && <span className="block text-xs font-normal text-muted-foreground">Follow-up {r.sequence - 1}</span>}
+      </span>
+    ),
+  },
   { key: "is_final_term", header: "Promotion considered", cell: (r) => (r.is_final_term ? "Yes (end of year)" : "No") },
   { key: "decision_count", header: "Students" },
   { key: "status", header: "Status", cell: (r) => <StatusBadge status={r.status === "APPLIED" ? "PUBLISHED" : "DRAFT"} label={r.status_display} /> },

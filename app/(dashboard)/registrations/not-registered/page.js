@@ -14,6 +14,11 @@ const COLUMNS = [
   { key: "email", header: "Email" },
   { key: "status", header: "Status", cell: (r) => <StatusBadge status={r.status} /> },
   {
+    key: "financially_cleared",
+    header: "Fees",
+    cell: (r) => <StatusBadge status={r.financially_cleared ? "ACTIVE" : "PENDING"} label={r.financially_cleared ? "Cleared" : "Not cleared"} />,
+  },
+  {
     key: "action",
     header: <span className="sr-only">Actions</span>,
     className: "text-right",
@@ -40,6 +45,7 @@ export default function NotRegisteredPage() {
         filters={[
           { key: "programme", label: "Programme", endpoint: "/programmes/", optionLabel: (p) => p.code },
           { key: "level", label: "Level", endpoint: "/levels/" },
+          { key: "cleared", label: "Fees", options: [{ value: "true", label: "Cleared" }, { value: "false", label: "Not cleared" }] },
         ]}
         emptyTitle="Every eligible student has registered"
       />

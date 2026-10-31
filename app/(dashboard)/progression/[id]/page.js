@@ -1,9 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { useParams } from "next/navigation";
+import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { CheckCheck, Loader2, MoreHorizontal, Pencil, RefreshCw, UserMinus, UserPlus } from "lucide-react";
+import { CheckCheck, ListRestart, Loader2, MoreHorizontal, Pencil, RefreshCw, TriangleAlert, UserMinus, UserPlus } from "lucide-react";
 import { toast } from "sonner";
 
 import { hasRole, useAuth } from "@/components/auth/auth-provider";
@@ -26,6 +26,7 @@ const toOptions = (labels) => Object.entries(labels).map(([value, label]) => ({ 
 
 export default function ProgressionReviewPage() {
   const { id } = useParams();
+  const router = useRouter();
   const { user } = useAuth();
   const { data: review, error, loading, reload, setData } = useApi(`/progression-reviews/${id}/`);
   const [refresh, setRefresh] = useState(0);
@@ -124,8 +125,17 @@ export default function ProgressionReviewPage() {
 
   async function run(name) {
     try {
+      if (name === "follow_up") {
+        const response = await api.post("/progression-reviews/generate/", { semester: review.semester, follow_up: true });
+        toast.success(`Follow-up review prepared for ${response.data.summary.students} student(s).`);
+        router.push(`/progression/${response.data.id}`);
+        return;
+      }
       if (name === "apply") {
-        const response = await api.post(`/progression-reviews/${id}/apply/`);
+        // Outstanding work is listed on the page and in the confirmation, so confirming acknowledges it.
+        const response = await api.post(`/progression-reviews/${id}/apply/`, {
+          acknowledge_outstanding: review.outstanding.length > 0,
+        });
         setData(response.data);
         const c = response.data.applied_counts;
         toast.success(`Applied to ${c.applied} student(s). ${c.skipped_incomplete} provisional and ${c.excluded} excluded were left unchanged.`);
@@ -144,14 +154,14 @@ export default function ProgressionReviewPage() {
   return (
     <RoleGate roles={["ADMIN", "REGISTRAR", "RESULTS_OFFICER"]}>
       <PageHeader
-        title={`Progression review · ${review.semester_name}`}
+        title={`${review.is_follow_up ? `Follow-up review ${review.sequence - 1}` : "Progression review"} · ${review.semester_name}`}
         description={
           review.status === "APPLIED"
             ? `Applied ${formatDateTime(review.applied_at)} by ${review.applied_by_name}.`
             : "Draft: nothing has been changed on any student record yet."
         }
         actions={
-          canEdit && (
+          canEdit ? (
             <>
               <Button variant="outline" onClick={() => setConfirm("regenerate")}>
                 <RefreshCw /> Recalculate
@@ -160,9 +170,42 @@ export default function ProgressionReviewPage() {
                 <CheckCheck /> Apply review
               </Button>
             </>
+          ) : (
+            review.can_follow_up &&
+            hasRole(user, "ADMIN", "REGISTRAR") && (
+              <Button variant="outline" onClick={() => setConfirm("follow_up")}>
+                <ListRestart /> Start follow-up review
+              </Button>
+            )
           )
         }
       />
+      {review.is_follow_up && (
+        <Alert className="mb-4">
+          <ListRestart />
+          <AlertTitle>Follow-up review</AlertTitle>
+          <AlertDescription>
+            Only students whose outcome arrived after the earlier review was applied are listed: those who were provisional or
+            excluded, and those not promoted whose result has since changed (a resit or deferred examination, a late result, an
+            amendment). Students already promoted or dismissed are not reconsidered here.
+          </AlertDescription>
+        </Alert>
+      )}
+      {review.status === "DRAFT" && review.outstanding.length > 0 && (
+        <Alert variant="destructive" className="mb-4">
+          <TriangleAlert />
+          <AlertTitle>Outcomes for this semester can still change</AlertTitle>
+          <AlertDescription>
+            <ul className="list-disc pl-4">
+              {review.outstanding.map((item) => (
+                <li key={item.kind}>{item.message}</li>
+              ))}
+            </ul>
+            Students affected are marked provisional and left unchanged. Apply now only if you need to; once these finish,
+            start a follow-up review to apply their outcomes.
+          </AlertDescription>
+        </Alert>
+      )}
       {!review.is_final_term && (
         <Alert className="mb-4">
           <AlertTitle>Mid-year review</AlertTitle>
@@ -223,13 +266,15 @@ export default function ProgressionReviewPage() {
       <ConfirmDialog
         open={confirm !== null}
         onOpenChange={(o) => !o && setConfirm(null)}
-        title={confirm === "apply" ? "Apply this progression review?" : "Recalculate the proposals?"}
+        title={{ apply: "Apply this progression review?", regenerate: "Recalculate the proposals?", follow_up: "Start a follow-up review?" }[confirm]}
         description={
-          confirm === "apply"
-            ? `This promotes students, records probation and dismisses students as shown (${s.dismiss} dismissal(s)). Provisional and excluded students are not changed. Each change is recorded in the student's history and the audit log. This cannot be undone from this page.`
-            : "Proposals are recomputed from the current results and regulations. Outcomes you have changed are kept."
+          {
+            apply: `This promotes students, records probation, sets repeats and dismisses students as shown (${s.dismiss} dismissal(s)). Provisional and excluded students are not changed. Each change is recorded in the student's history and the audit log. This cannot be undone from this page.${review.outstanding.length ? ` Still outstanding: ${review.outstanding.map((o) => o.message).join(" ")}` : ""}`,
+            regenerate: "Proposals are recomputed from the current results and regulations. Outcomes you have changed are kept.",
+            follow_up: "Prepares a review of students whose outcome arrived after this one was applied. Nothing changes until you apply it.",
+          }[confirm]
         }
-        confirmLabel={confirm === "apply" ? "Apply review" : "Recalculate"}
+        confirmLabel={{ apply: "Apply review", regenerate: "Recalculate", follow_up: "Prepare follow-up" }[confirm]}
         destructive={confirm === "apply" && s.dismiss > 0}
         onConfirm={() => run(confirm)}
       />

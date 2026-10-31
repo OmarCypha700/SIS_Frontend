@@ -8,12 +8,12 @@ import { Button } from "@/components/ui/button";
 import { Dialog, DialogContent, DialogDescription, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { formatDateTime, ROLE_LABELS } from "@/lib/format";
 
-const ACTION_OPTIONS = ["auth.", "user.", "appointment.", "student.", "registration.", "results.", "marks.", "assessment.", "institution.", "semester.", "course"].map(
+const ACTION_OPTIONS = ["auth.", "user.", "appointment.", "finance.", "student.", "registration.", "results.", "marks.", "assessment.", "institution.", "semester.", "course"].map(
   (value) => ({ value, label: value.replace(/\.$/, "") }),
 );
 
 // "Everything done as Registrar", including acting holders, whoever held the office then.
-const CAPACITY_OPTIONS = ["ADMIN", "REGISTRAR", "RESULTS_OFFICER", "LECTURER"].map((value) => ({ value, label: ROLE_LABELS[value] }));
+const CAPACITY_OPTIONS = ["ADMIN", "REGISTRAR", "RESULTS_OFFICER", "LECTURER", "ACCOUNTS_OFFICER"].map((value) => ({ value, label: ROLE_LABELS[value] }));
 
 export default function AuditLogPage() {
   const [selected, setSelected] = useState(null);

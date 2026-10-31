@@ -86,6 +86,7 @@ export function CourseSelector({ options: allOptions, selected, onToggle, disabl
                       <span className="text-sm">{option.course_title}</span>
                       {option.is_compulsory && <Badge variant="secondary">Compulsory</Badge>}
                       {option.is_retake && <Badge variant="outline">Retake</Badge>}
+                      {option.is_repeat && <Badge variant="outline">Repeat year</Badge>}
                       {option.is_registered && (
                         <Badge variant="outline" className="gap-1">
                           <Check className="size-3" /> Registered

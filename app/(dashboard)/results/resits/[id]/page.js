@@ -129,7 +129,8 @@ export default function ResitSheetPage() {
             ? `Coursework is kept and the resit score (out of 100) replaces: ${sheet.exam_components.join(", ")}.`
             : "No component is marked as an examination, so the resit score (out of 100) becomes the course total."}{" "}
           {sheet.grade_cap ? `Resit grades are capped at ${sheet.grade_cap} grade points.` : "There is no resit grade cap."}{" "}
-          Students who do not register keep their original result.
+          Students who do not register keep their original result. Excused (Incomplete) students sit a deferred
+          examination: they are registered automatically, no cap applies, and one who does not sit stays Incomplete.
         </AlertDescription>
       </Alert>
       <SignoffWarnings warnings={sheet.signoff_warnings} />
@@ -205,7 +206,10 @@ export default function ResitSheetPage() {
                         )}
                         <TableCell className={p.can_register ? "" : "pl-6"}>
                           <p className="font-medium">{row.student_name}</p>
-                          <p className="text-xs text-muted-foreground">{row.student_number}</p>
+                          <p className="text-xs text-muted-foreground">
+                            {row.student_number}
+                            {row.is_deferred && " · deferred examination (not capped)"}
+                          </p>
                         </TableCell>
                         <TableCell className="tabular-nums">
                           {row.original_total} · <span className="font-semibold text-destructive">{row.original_grade}</span>

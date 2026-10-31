@@ -53,6 +53,12 @@ export default function StudentRegistrationPage() {
                 <AlertDescription>Please contact the registry for assistance.</AlertDescription>
               </Alert>
             )}
+            {data.can_register && data.financial_clearance?.message && (
+              <Alert variant="destructive">
+                <AlertTitle>Financial clearance required</AlertTitle>
+                <AlertDescription>{data.financial_clearance.message}</AlertDescription>
+              </Alert>
+            )}
             {data.can_register && !data.window_open && (
               <Alert>
                 <AlertTitle>Registration is closed</AlertTitle>
@@ -169,7 +175,7 @@ export default function StudentRegistrationPage() {
                 {step === "select" && (
                   <Button
                     className="w-full"
-                    disabled={!data.window_open || !data.can_register || selected.size === 0}
+                    disabled={!data.window_open || !data.can_register || Boolean(data.financial_clearance?.message) || selected.size === 0}
                     onClick={() => {
                       setSubmitError(null);
                       setStep("review");

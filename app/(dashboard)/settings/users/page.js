@@ -17,7 +17,7 @@ import { Input } from "@/components/ui/input";
 import { api, errorMessage, fieldErrors } from "@/lib/api";
 import { formatDateTime, ROLE_LABELS } from "@/lib/format";
 
-const ROLE_OPTIONS = ["ADMIN", "REGISTRAR", "RESULTS_OFFICER", "LECTURER"].map((value) => ({ value, label: ROLE_LABELS[value] }));
+const ROLE_OPTIONS = ["ADMIN", "REGISTRAR", "RESULTS_OFFICER", "LECTURER", "ACCOUNTS_OFFICER"].map((value) => ({ value, label: ROLE_LABELS[value] }));
 
 const FIELDS = [
   { name: "title", label: "Title", hint: "e.g. Dr., Mrs." },

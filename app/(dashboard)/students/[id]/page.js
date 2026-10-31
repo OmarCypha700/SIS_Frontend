@@ -18,6 +18,7 @@ import { DataTable } from "@/components/tables/data-table";
 import { StudentTranscripts } from "@/components/transcripts/student-transcripts";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
+import { Checkbox } from "@/components/ui/checkbox";
 import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle } from "@/components/ui/dialog";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Textarea } from "@/components/ui/textarea";
@@ -51,6 +52,9 @@ export default function StudentDetailPage() {
             {student.student_number} · {student.programme_code} · {student.level_name}
             <StatusBadge status={student.status} />
             {student.academic_standing === "PROBATION" && <StatusBadge status="PROBATION" label="On probation" />}
+            {student.repeating_level && student.repeating_level === student.current_level && (
+              <StatusBadge status="PENDING" label={`Repeating ${student.level_name}`} />
+            )}
             {student.is_active === false && <StatusBadge status="CANCELLED" label="Account disabled" />}
           </span>
         }
@@ -251,11 +255,15 @@ function StudentRecordTab({ studentId }) {
 function StatusDialog({ open, onOpenChange, student, onSaved }) {
   const [status, setStatus] = useState(student.status);
   const [reason, setReason] = useState("");
+  const [withdraw, setWithdraw] = useState(false);
   const [pending, setPending] = useState(false);
+  const leaving = ["DEFERRED", "SUSPENDED", "WITHDRAWN", "DISMISSED"].includes(status);
   async function save() {
     setPending(true);
     try {
-      const response = await api.post(`/students/${student.id}/change-status/`, { status, reason });
+      const response = await api.post(`/students/${student.id}/change-status/`, {
+        status, reason, withdraw_from_semester: leaving && withdraw,
+      });
       onSaved(response.data);
       toast.success("Status updated.");
       setReason("");
@@ -286,6 +294,15 @@ function StatusDialog({ open, onOpenChange, student, onSaved }) {
           <Field id="status-reason" label="Reason" required>
             <Textarea id="status-reason" rows={3} value={reason} onChange={(e) => setReason(e.target.value)} />
           </Field>
+          {leaving && (
+            <label className="flex items-start gap-2 text-sm">
+              <Checkbox checked={withdraw} onCheckedChange={(v) => setWithdraw(v === true)} className="mt-0.5" />
+              <span>
+                Also withdraw them from this semester. They come off the class lists of courses whose results are still being
+                entered, so lecturers are not asked for their marks. Courses already submitted or published stay on the record.
+              </span>
+            </label>
+          )}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={() => onOpenChange(false)}>

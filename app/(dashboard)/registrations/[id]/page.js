@@ -3,7 +3,7 @@
 import Link from "next/link";
 import { useParams } from "next/navigation";
 import { useState } from "react";
-import { Check, FileText, X } from "lucide-react";
+import { Check, FileText, LogOut, X } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog, ErrorState, LoadingBlock, PageHeader, RoleGate, StatusBadge } from "@/components/common";
@@ -18,6 +18,7 @@ export default function RegistrationDetailPage() {
   const { id } = useParams();
   const { data, error, loading, reload, setData } = useApi(`/registrations/${id}/`);
   const [review, setReview] = useState(null);
+  const [withdrawing, setWithdrawing] = useState(false);
 
   if (loading && !data) return <LoadingBlock />;
   if (error) return <ErrorState error={error} onRetry={reload} />;
@@ -42,6 +43,11 @@ export default function RegistrationDetailPage() {
                 <FileText /> Slip
               </Link>
             </Button>
+            {["PENDING", "REGISTERED"].includes(data.status) && (
+              <Button variant="outline" onClick={() => setWithdrawing(true)}>
+                <LogOut /> Withdraw from semester
+              </Button>
+            )}
             {data.status === "PENDING" && (
               <>
                 <Button variant="outline" onClick={() => setReview("reject")}>
@@ -87,6 +93,25 @@ export default function RegistrationDetailPage() {
             const response = await api.post(`/registrations/${id}/review/`, { approve: review === "approve", comment });
             setData(response.data);
             toast.success(review === "approve" ? "Registration approved." : "Registration rejected.");
+          } catch (e) {
+            toast.error(errorMessage(e));
+            throw e;
+          }
+        }}
+      />
+      <ConfirmDialog
+        open={withdrawing}
+        onOpenChange={setWithdrawing}
+        title="Withdraw this student from the semester?"
+        description="For a student who defers, withdraws or is suspended mid-semester. Courses whose results are still being entered are dropped, so the student leaves those class lists; marks already entered are kept. Courses already submitted or published stay on the record. If nothing remains, the registration is cancelled. Change the student's status separately if needed."
+        confirmLabel="Withdraw"
+        destructive
+        requireReason
+        onConfirm={async (reason) => {
+          try {
+            const response = await api.post(`/registrations/${id}/withdraw/`, { reason });
+            setData(response.data);
+            toast.success("Student withdrawn from the semester.");
           } catch (e) {
             toast.error(errorMessage(e));
             throw e;

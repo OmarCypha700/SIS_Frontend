@@ -55,7 +55,7 @@ export function MyResits() {
                 </p>
               </div>
               <div className="flex items-center gap-2">
-                <StatusBadge status={entry.status} label={entry.status_display} />
+                <StatusBadge status={entry.status} label={entry.is_deferred ? "Deferred examination" : entry.status_display} />
                 {entry.status === "ELIGIBLE" && ["DRAFT", "RETURNED"].includes(entry.sheet_status) && (
                   <Button size="sm" onClick={() => register(entry)} disabled={pending === entry.id}>
                     {pending === entry.id && <Loader2 className="animate-spin" />}

@@ -48,11 +48,14 @@ export function SemesterResults({ semester, compact = false }) {
             </TableHeader>
             <TableBody>
               {semester.courses.map((course) => (
-                <TableRow key={course.course_code}>
+                <TableRow key={course.course_code} className={course.superseded ? "text-muted-foreground" : undefined}>
                   <TableCell className="pl-6 font-medium">{course.course_code}</TableCell>
                   <TableCell>
                     {course.course_title}
                     {course.is_retake && <Badge variant="outline" className="ml-2">Retake</Badge>}
+                    {course.is_repeat && <Badge variant="outline" className="ml-2">Repeat year</Badge>}
+                    {course.is_incomplete && <Badge variant="secondary" className="ml-2">Incomplete (excused)</Badge>}
+                    {course.superseded && <Badge variant="secondary" className="ml-2">Superseded by repeat</Badge>}
                     {course.is_amended && <Badge variant="outline" className="ml-2">Amended</Badge>}
                     {course.is_resit && <Badge variant="outline" className="ml-2">Resit</Badge>}
                     {course.grade_capped && <Badge variant="outline" className="ml-2">Grade capped</Badge>}

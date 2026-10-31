@@ -25,6 +25,7 @@ const OUTCOMES = {
   problem: { status: "REJECTED", label: "Problem" },
   pending: { status: "PENDING", label: "Awaiting approval" },
   blocked: { status: "SUSPENDED", label: "Cannot register" },
+  not_cleared: { status: "PENDING", label: "Not financially cleared" },
 };
 
 const list = (data) => (Array.isArray(data) ? data : (data?.results ?? []));

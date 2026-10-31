@@ -28,6 +28,8 @@ const FLAGS = [
   ["allow_cross_programme_electives", "Students may take electives from other programmes"],
   ["allow_credit_overload", "Allow exceeding the maximum credits, subject to approval"],
   ["registration_requires_approval", "Every registration must be approved by the registry"],
+  ["require_financial_clearance", "Students must be financially cleared by the Accounts Office before registering"],
+  ["withhold_results_until_cleared", "Withhold results from students not cleared for the current semester"],
   ["approver_must_differ_from_submitter", "Results must be approved by someone other than the submitter"],
   ["publisher_must_differ_from_submitter", "Results must be published by someone other than the submitter"],
   ["amendments_require_second_approver", "Amendments must be approved by someone other than the requester"],

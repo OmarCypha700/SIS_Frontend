@@ -21,6 +21,7 @@ import { formatDate } from "@/lib/format";
 const OFFICES = [
   { value: "REGISTRAR", label: "Registrar" },
   { value: "RESULTS_OFFICER", label: "Results Officer" },
+  { value: "ACCOUNTS_OFFICER", label: "Accounts Officer" },
 ];
 
 const STATE_BADGES = {

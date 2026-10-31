@@ -99,6 +99,14 @@ function OnBehalfForm({ studentId, onChangeStudent }) {
             <AlertDescription>This student&apos;s status does not allow registration.</AlertDescription>
           </Alert>
         )}
+        {data.financial_clearance?.message && (
+          <Alert variant="destructive">
+            <AlertDescription>
+              Not financially cleared for this semester. Only an administrator can register this student before the Accounts
+              Office clears them; the override is recorded in the audit log.
+            </AlertDescription>
+          </Alert>
+        )}
         {!data.window_open && (
           <Alert>
             <AlertDescription>{data.window_message} As registry staff you may still register this student.</AlertDescription>

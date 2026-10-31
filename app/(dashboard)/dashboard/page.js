@@ -36,6 +36,7 @@ export default function DashboardPage() {
       {data?.appointments_review?.length > 0 && <AppointmentsReviewCard items={data.appointments_review} />}
       {data?.kind === "lecturer" && <LecturerDashboard data={data} />}
       {data?.kind === "student" && <StudentDashboard data={data} />}
+      {data?.kind === "accounts" && <AccountsDashboard data={data} />}
     </>
   );
 }
@@ -361,6 +362,24 @@ function TeachingCard({ courses, title }) {
           )}
         </CardContent>
       </Card>
+  );
+}
+
+/** Accounts Office: clearance progress for the current semester. */
+function AccountsDashboard({ data }) {
+  const c = data.clearance;
+  if (!c) return <EmptyState title="No current semester" description="Clearance starts once the registry sets the current semester." />;
+  return (
+    <div className="space-y-6">
+      <div className="grid gap-4 sm:grid-cols-3">
+        <StatCard label="Students who may register" value={c.eligible} icon={Users} />
+        <StatCard label="Financially cleared" value={c.cleared} icon={CheckCircle2} />
+        <StatCard label="Not yet cleared" value={c.not_cleared} icon={AlertTriangle} />
+      </div>
+      <Button asChild>
+        <Link href="/finance/clearance">Open financial clearance</Link>
+      </Button>
+    </div>
   );
 }
 
