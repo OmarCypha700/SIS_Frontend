@@ -16,7 +16,7 @@ export function Transcript({ record, title = "Academic record", unofficial = tru
           <PdfButton url={pdfUrl} params={pdfParams} filename={`transcript-${s.student_number}.pdf`} />
         </div>
       )}
-      <article className="space-y-6 rounded-xl border bg-card p-6 print:border-0 print:p-0">
+      <article className="space-y-6 rounded-xl border bg-card p-4 sm:p-6 print:border-0 print:p-0">
         <header className="flex flex-col gap-1 border-b pb-4 text-center">
           <p className="text-lg font-semibold">{institution?.name}</p>
           <p className="text-sm uppercase tracking-wider text-muted-foreground">{title}</p>

@@ -12,7 +12,7 @@ export function RegisteredCourses({ registration }) {
         <TableRow>
           <TableHead className="pl-6">Code</TableHead>
           <TableHead>Course</TableHead>
-          <TableHead>Category</TableHead>
+          <TableHead className="hidden sm:table-cell print:table-cell">Category</TableHead>
           <TableHead className="pr-6 text-right">Credits</TableHead>
         </TableRow>
       </TableHeader>
@@ -20,21 +20,23 @@ export function RegisteredCourses({ registration }) {
         {registration.courses.map((c) => (
           <TableRow key={c.id}>
             <TableCell className="pl-6 font-medium">{c.course_code}</TableCell>
-            <TableCell>
+            <TableCell className="min-w-36 whitespace-normal">
               {c.course_title}
               {c.is_retake && <Badge variant="outline" className="ml-2">Retake</Badge>}
               {c.is_repeat && <Badge variant="outline" className="ml-2">Repeat year</Badge>}
+              <span className="block text-xs text-muted-foreground sm:hidden print:hidden">{titleCase(c.category)}</span>
             </TableCell>
-            <TableCell>{titleCase(c.category)}</TableCell>
+            <TableCell className="hidden sm:table-cell print:table-cell">{titleCase(c.category)}</TableCell>
             <TableCell className="pr-6 text-right tabular-nums">{c.credits}</TableCell>
           </TableRow>
         ))}
       </TableBody>
       <TableFooter>
         <TableRow>
-          <TableCell colSpan={3} className="pl-6">
+          <TableCell colSpan={2} className="pl-6">
             Total
           </TableCell>
+          <TableCell className="hidden sm:table-cell print:table-cell" />
           <TableCell className="pr-6 text-right tabular-nums">{registration.total_credits}</TableCell>
         </TableRow>
       </TableFooter>

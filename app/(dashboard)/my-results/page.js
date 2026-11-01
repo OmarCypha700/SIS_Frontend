@@ -29,7 +29,7 @@ export default function MyResultsPage() {
       {error && <ErrorState error={error} onRetry={reload} />}
       {data && (
         <div className="space-y-6">
-          <div className="grid gap-4 sm:grid-cols-3">
+          <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 sm:gap-4">
             <StatCard label="Cumulative GPA" value={data.summary.cgpa ?? "—"} icon={Scale} tone="violet" />
             <StatCard label="Credits earned" value={data.summary.credits_earned} hint={data.summary.required_credits ? `of ${data.summary.required_credits} required` : undefined} icon={Sigma} tone="blue" />
             <StatCard
@@ -38,6 +38,7 @@ export default function MyResultsPage() {
               hint={`${data.summary.credits_attempted} credits attempted`}
               icon={probation ? ShieldAlert : ShieldCheck}
               tone={probation ? "amber" : "green"}
+              className="col-span-2 sm:col-span-1"
             />
           </div>
           <MyResits />

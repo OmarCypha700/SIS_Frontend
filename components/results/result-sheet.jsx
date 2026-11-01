@@ -292,8 +292,14 @@ function ComponentsEditor({ sheet, onChange, editable }) {
         {rows.map((row, index) => (
           <div key={row.id ?? `new-${index}`} className="grid grid-cols-2 gap-2 sm:grid-cols-[1fr_7rem_7rem_6rem_6rem_2.5rem] sm:items-center">
             <Input className="col-span-2 sm:col-span-1" aria-label="Component name" value={row.name} onChange={(e) => update(index, { name: e.target.value })} />
-            <Input type="number" min="0" max="100" step="0.5" aria-label="Weight" value={row.weight} onChange={(e) => update(index, { weight: e.target.value })} />
-            <Input type="number" min="1" step="0.5" aria-label="Maximum score" value={row.max_score} onChange={(e) => update(index, { max_score: e.target.value })} />
+            <label className="grid gap-1">
+              <span className="text-xs text-muted-foreground sm:hidden">Weight (%)</span>
+              <Input type="number" inputMode="decimal" min="0" max="100" step="0.5" aria-label="Weight" value={row.weight} onChange={(e) => update(index, { weight: e.target.value })} />
+            </label>
+            <label className="grid gap-1">
+              <span className="text-xs text-muted-foreground sm:hidden">Maximum score</span>
+              <Input type="number" inputMode="decimal" min="1" step="0.5" aria-label="Maximum score" value={row.max_score} onChange={(e) => update(index, { max_score: e.target.value })} />
+            </label>
             <label className="flex items-center gap-2 text-sm">
               <Checkbox checked={row.is_required} onCheckedChange={(v) => update(index, { is_required: Boolean(v) })} /> Required
             </label>

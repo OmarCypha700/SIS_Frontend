@@ -34,7 +34,33 @@ export function SemesterResults({ semester, compact = false }) {
         </div>
       </CardHeader>
       <CardContent className="px-0">
-        <div className="overflow-x-auto">
+        {/* Phones: one row per course with the grade always in view. */}
+        <ul className="divide-y border-y text-sm sm:hidden print:hidden">
+          {semester.courses.map((course) => (
+            <li key={course.course_code} className={`flex items-start gap-3 px-4 py-3 ${course.superseded ? "text-muted-foreground" : ""}`}>
+              <div className="min-w-0 flex-1">
+                <p>
+                  <span className="font-medium">{course.course_code}</span> · {course.course_title}
+                </p>
+                <p className="mt-0.5 text-xs text-muted-foreground tabular-nums">
+                  {course.credits} credits{course.total != null && course.total !== "" ? ` · score ${course.total}` : ""}
+                  {course.grade_point != null && course.grade_point !== "" ? ` · ${course.grade_point} points` : ""}
+                </p>
+                <CourseBadges course={course} className="mt-1.5 flex flex-wrap gap-1" />
+              </div>
+              <span className={`w-9 shrink-0 text-right text-lg font-semibold ${course.is_pass ? "" : "text-destructive"}`}>
+                {course.grade}
+              </span>
+            </li>
+          ))}
+          <li className="flex justify-between gap-3 bg-muted/50 px-4 py-2.5 font-medium">
+            <span>
+              Credits {semester.credits_attempted} attempted · {semester.credits_earned} earned
+            </span>
+            <span className="shrink-0">GPA {semester.gpa ?? "—"}</span>
+          </li>
+        </ul>
+        <div className="hidden overflow-x-auto sm:block print:block">
           <Table>
             <TableHeader>
               <TableRow>
@@ -52,14 +78,7 @@ export function SemesterResults({ semester, compact = false }) {
                   <TableCell className="pl-6 font-medium">{course.course_code}</TableCell>
                   <TableCell>
                     {course.course_title}
-                    {course.is_retake && <Badge variant="outline" className="ml-2">Retake</Badge>}
-                    {course.is_repeat && <Badge variant="outline" className="ml-2">Repeat year</Badge>}
-                    {course.is_incomplete && <Badge variant="secondary" className="ml-2">Incomplete (excused)</Badge>}
-                    {course.superseded && <Badge variant="secondary" className="ml-2">Superseded by repeat</Badge>}
-                    {course.is_amended && <Badge variant="outline" className="ml-2">Amended</Badge>}
-                    {course.is_resit && <Badge variant="outline" className="ml-2">Resit</Badge>}
-                    {course.grade_capped && <Badge variant="outline" className="ml-2">Grade capped</Badge>}
-                    {course.is_published === false && <Badge variant="secondary" className="ml-2">Unpublished</Badge>}
+                    <CourseBadges course={course} className="contents [&>*]:ml-2" />
                   </TableCell>
                   <TableCell className="text-right tabular-nums">{course.credits}</TableCell>
                   <TableCell className="text-right tabular-nums">{course.total}</TableCell>
@@ -82,5 +101,28 @@ export function SemesterResults({ semester, compact = false }) {
         </div>
       </CardContent>
     </Card>
+  );
+}
+
+function CourseBadges({ course, className }) {
+  const badges = [
+    course.is_retake && ["outline", "Retake"],
+    course.is_repeat && ["outline", "Repeat year"],
+    course.is_incomplete && ["secondary", "Incomplete (excused)"],
+    course.superseded && ["secondary", "Superseded by repeat"],
+    course.is_amended && ["outline", "Amended"],
+    course.is_resit && ["outline", "Resit"],
+    course.grade_capped && ["outline", "Grade capped"],
+    course.is_published === false && ["secondary", "Unpublished"],
+  ].filter(Boolean);
+  if (!badges.length) return null;
+  return (
+    <span className={className}>
+      {badges.map(([variant, label]) => (
+        <Badge key={label} variant={variant}>
+          {label}
+        </Badge>
+      ))}
+    </span>
   );
 }

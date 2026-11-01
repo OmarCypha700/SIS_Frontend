@@ -22,7 +22,7 @@ export default function RegistrationSlipPage() {
       <div className="mb-4 flex justify-end print:hidden">
         <PdfButton url={`/registrations/${id}/slip-pdf/`} filename="registration-slip.pdf" />
       </div>
-      <article className="space-y-6 rounded-xl border bg-card p-6 print:border-0 print:p-0">
+      <article className="space-y-6 rounded-xl border bg-card p-4 sm:p-6 print:border-0 print:p-0">
         <header className="border-b pb-4 text-center">
           <p className="text-lg font-semibold">{institution?.name}</p>
           <p className="text-sm uppercase tracking-wider text-muted-foreground">Course registration slip</p>
@@ -48,7 +48,7 @@ export default function RegistrationSlipPage() {
             </dd>
           </div>
         </dl>
-        <div className="-mx-6 print:mx-0">
+        <div className="-mx-4 sm:-mx-6 print:mx-0">
           <RegisteredCourses registration={data} />
         </div>
         <p className="text-xs text-muted-foreground">Reference #{data.id}. Generated {formatDateTime(new Date())}.</p>

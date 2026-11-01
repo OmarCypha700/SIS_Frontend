@@ -21,7 +21,7 @@ export default function ResultSlipPage() {
           <div className="mb-4 flex justify-end print:hidden">
             <PdfButton url="/my-results/slip-pdf/" params={{ semester: id }} filename="result-slip.pdf" />
           </div>
-          <article className="space-y-5 rounded-xl border bg-card p-6 print:border-0 print:p-0">
+          <article className="space-y-5 rounded-xl border bg-card p-4 sm:p-6 print:border-0 print:p-0">
             <header className="border-b pb-4 text-center">
               <p className="text-lg font-semibold">{data.institution.name}</p>
               <p className="text-sm uppercase tracking-wider text-muted-foreground">Semester result slip</p>

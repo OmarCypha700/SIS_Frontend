@@ -14,6 +14,7 @@ import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@
 import { useApi } from "@/hooks/use-api";
 import { api } from "@/lib/api";
 import { formatDateTime, titleCase } from "@/lib/format";
+import { cn } from "@/lib/utils";
 
 export default function StudentRegistrationPage() {
   const { data, error, loading, reload, setData } = useApi("/registrations/current/");
@@ -39,13 +40,25 @@ export default function StudentRegistrationPage() {
     }
   }
 
+  const reviewDisabled =
+    !data || !data.window_open || !data.can_register || Boolean(data.financial_clearance?.message) || selected.size === 0;
+  const reviewLabel = data?.registration ? "Review changes" : "Review registration";
+  function startReview() {
+    setSubmitError(null);
+    setStep("review");
+    window.scrollTo({ top: 0, behavior: "smooth" });
+  }
+  const showActionBar = data && step === "select" && data.can_register && data.window_open && data.options.length > 0;
+  const limits = data?.credit_limits || {};
+  const outOfRange = (limits.min && totals.credits < limits.min) || (limits.max && totals.credits > limits.max);
+
   return (
     <RoleGate roles={["STUDENT"]}>
       <PageHeader title="Course registration" description={data?.semester?.name} />
       {loading && !data && <LoadingBlock rows={6} />}
       {error && <ErrorState error={error} onRetry={reload} />}
       {data && (
-        <div className="grid gap-6 lg:grid-cols-3">
+        <div className={`grid gap-6 lg:grid-cols-3 ${showActionBar ? "pb-20 lg:pb-0" : ""}`}>
           <div className="space-y-4 lg:col-span-2">
             {!data.can_register && (
               <Alert variant="destructive">
@@ -98,17 +111,20 @@ export default function StudentRegistrationPage() {
                     <TableHeader>
                       <TableRow>
                         <TableHead className="pl-6">Course</TableHead>
-                        <TableHead>Category</TableHead>
+                        <TableHead className="hidden sm:table-cell">Category</TableHead>
                         <TableHead className="pr-6 text-right">Credits</TableHead>
                       </TableRow>
                     </TableHeader>
                     <TableBody>
                       {totals.courses.map((o) => (
                         <TableRow key={o.offering}>
-                          <TableCell className="pl-6">
+                          <TableCell className="pl-6 whitespace-normal">
                             <span className="font-medium">{o.course_code}</span> {o.course_title}
+                            <span className="block text-xs text-muted-foreground sm:hidden">
+                              {o.is_compulsory ? "Compulsory" : titleCase(o.category)}
+                            </span>
                           </TableCell>
-                          <TableCell>{o.is_compulsory ? "Compulsory" : titleCase(o.category)}</TableCell>
+                          <TableCell className="hidden sm:table-cell">{o.is_compulsory ? "Compulsory" : titleCase(o.category)}</TableCell>
                           <TableCell className="pr-6 text-right tabular-nums">{o.credits}</TableCell>
                         </TableRow>
                       ))}
@@ -173,15 +189,8 @@ export default function StudentRegistrationPage() {
                   )}
                 </dl>
                 {step === "select" && (
-                  <Button
-                    className="w-full"
-                    disabled={!data.window_open || !data.can_register || Boolean(data.financial_clearance?.message) || selected.size === 0}
-                    onClick={() => {
-                      setSubmitError(null);
-                      setStep("review");
-                    }}
-                  >
-                    <ClipboardCheck /> {data.registration ? "Review changes" : "Review registration"}
+                  <Button className="w-full" disabled={reviewDisabled} onClick={startReview}>
+                    <ClipboardCheck /> {reviewLabel}
                   </Button>
                 )}
                 {data.registration && (
@@ -196,6 +205,30 @@ export default function StudentRegistrationPage() {
       )}
       {data && data.options.length === 0 && !loading && step === "select" && (
         <EmptyState title="No courses available" description="No course offerings are open to you in this semester." />
+      )}
+      {showActionBar && (
+        // Phones: the summary card is above the course list, so keep the next step within thumb reach.
+        <div
+          role="region"
+          aria-label="Registration actions"
+          className="fixed inset-x-0 bottom-0 z-20 border-t bg-background/95 px-4 pt-3 pb-[max(0.75rem,env(safe-area-inset-bottom))] backdrop-blur lg:hidden"
+        >
+          <div className="flex items-center justify-between gap-3">
+            <div className="text-sm">
+              <p className="font-medium tabular-nums">
+                {totals.credits} credits · {selected.size} course{selected.size === 1 ? "" : "s"}
+              </p>
+              {Boolean(limits.min || limits.max) && (
+                <p className={cn("text-xs text-muted-foreground", outOfRange && "font-medium text-destructive")}>
+                  Allowed {limits.min ?? 0}–{limits.max ?? "∞"}
+                </p>
+              )}
+            </div>
+            <Button disabled={reviewDisabled} onClick={startReview}>
+              <ClipboardCheck /> {reviewLabel}
+            </Button>
+          </div>
+        </div>
       )}
     </RoleGate>
   );

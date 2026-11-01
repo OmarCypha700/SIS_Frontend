@@ -452,8 +452,15 @@ function StudentDashboard({ data }) {
           </div>
         </CardContent>
       </Card>
-      <div className="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <StatCard label="Programme" value={<span className="text-base">{s.programme}</span>} hint={s.programme_code} icon={GraduationCap} tone="brand" />
+      <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+        <StatCard
+          label="Programme"
+          value={<span className="text-base">{s.programme}</span>}
+          hint={s.programme_code}
+          icon={GraduationCap}
+          tone="brand"
+          className="col-span-2 lg:col-span-1"
+        />
         <StatCard label="Current level" value={s.level} hint={<StatusBadge status={s.status} label={s.status_display} />} icon={Layers} tone="teal" />
         <StatCard label="CGPA" value={data.results?.cgpa ?? "—"} hint="Published results only" icon={Scale} tone="violet" />
         <StatCard
@@ -462,6 +469,7 @@ function StudentDashboard({ data }) {
           hint={data.results?.required_credits ? `of ${data.results.required_credits} required` : undefined}
           icon={Sigma}
           tone="blue"
+          className="col-span-2 lg:col-span-1"
         />
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
