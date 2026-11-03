@@ -56,7 +56,7 @@ export function DeleteRecordDialog({ name, noun = "record", endpoint, onClose, o
         </DialogHeader>
         {!check && <Skeleton className="h-20" />}
         {check && !check.can_delete && (
-          <Alert>
+          <Alert variant="warning">
             <ShieldAlert />
             <AlertTitle>This {noun} can&rsquo;t be deleted</AlertTitle>
             <AlertDescription>

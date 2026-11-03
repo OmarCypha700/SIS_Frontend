@@ -60,7 +60,7 @@ export default function FinancialClearancePage() {
     <RoleGate roles={["ADMIN", "ACCOUNTS_OFFICER", "REGISTRAR"]}>
       <PageHeader
         title="Financial clearance"
-        description="Decide, semester by semester, which students may register. The system records the decision only; fees are handled in your accounting system."
+        description="Who may register this semester. Students who have paid enough are cleared automatically; you can clear or revoke anyone here, for example for a payment plan or sponsor."
         actions={
           canEdit && (
             <Button variant="outline" onClick={() => setImporting(true)}>
@@ -70,7 +70,7 @@ export default function FinancialClearancePage() {
         }
       />
       {summary && !summary.required && (
-        <Alert className="mb-4">
+        <Alert variant="warning" className="mb-4">
           <AlertTitle>Clearance is not enforced yet</AlertTitle>
           <AlertDescription>
             Students can register without clearance until an administrator turns on &ldquo;Students must be financially cleared
@@ -228,7 +228,7 @@ function ImportDialog({ semester, semesterName, onClose, onDone }) {
           </DialogDescription>
         </DialogHeader>
         {result ? (
-          <Alert>
+          <Alert variant="success">
             <AlertTitle>
               {students(result.cleared)} cleared, {students(result.not_cleared)} not cleared
             </AlertTitle>

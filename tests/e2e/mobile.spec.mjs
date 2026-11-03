@@ -16,7 +16,7 @@ async function fitsScreen(page) {
 test("student pages fit a phone screen", async ({ page }) => {
   await login(page, ACCOUNTS.student);
   await fitsScreen(page);
-  for (const url of ["/registration", "/registration/history", "/my-results", "/my-results/transcript", "/profile", "/notifications"]) {
+  for (const url of ["/registration", "/registration/history", "/my-results", "/my-results/transcript", "/fees", "/profile", "/notifications"]) {
     await open(page, url);
     await fitsScreen(page);
   }

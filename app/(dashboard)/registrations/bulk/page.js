@@ -314,7 +314,7 @@ function CohortRun({ cohort }) {
             </Card>
           ) : (
             counts.registered > 0 && (
-              <Alert>
+              <Alert variant="success">
                 <CheckCircle2 />
                 <AlertTitle>
                   {counts.registered} student{counts.registered === 1 ? "" : "s"} registered

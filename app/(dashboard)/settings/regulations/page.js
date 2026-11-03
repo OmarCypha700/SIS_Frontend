@@ -137,7 +137,7 @@ export default function RegulationsPage() {
             </div>
             {presetKey && <p className="text-sm text-muted-foreground">{presets.find((p) => p.key === presetKey)?.summary}</p>}
             {loadedPreset && (
-              <Alert>
+              <Alert variant="warning">
                 <Info />
                 <AlertTitle>Not saved yet</AlertTitle>
                 <AlertDescription>

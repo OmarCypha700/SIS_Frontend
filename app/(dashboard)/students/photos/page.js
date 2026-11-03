@@ -258,7 +258,7 @@ export default function StudentPhotoImportPage() {
             </div>
           )}
           {finished && (
-            <Alert>
+            <Alert variant="success">
               <CheckCircle2 />
               <AlertTitle>Import finished</AlertTitle>
               <AlertDescription>

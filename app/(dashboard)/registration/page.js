@@ -69,11 +69,16 @@ export default function StudentRegistrationPage() {
             {data.can_register && data.financial_clearance?.message && (
               <Alert variant="destructive">
                 <AlertTitle>Financial clearance required</AlertTitle>
-                <AlertDescription>{data.financial_clearance.message}</AlertDescription>
+                <AlertDescription>
+                  <p>{data.financial_clearance.message}</p>
+                  <Button asChild size="sm" variant="outline" className="mt-2">
+                    <Link href="/fees">Pay fees</Link>
+                  </Button>
+                </AlertDescription>
               </Alert>
             )}
             {data.can_register && !data.window_open && (
-              <Alert>
+              <Alert variant="warning">
                 <AlertTitle>Registration is closed</AlertTitle>
                 <AlertDescription>{data.window_message}</AlertDescription>
               </Alert>

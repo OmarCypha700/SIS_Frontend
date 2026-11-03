@@ -104,7 +104,7 @@ export function IssueTranscriptDialog({ studentId, onClose, onIssued }) {
               </Alert>
             )}
             {preview.can_issue && preview.is_interim && (
-              <Alert>
+              <Alert variant="warning">
                 <AlertTriangle />
                 <AlertTitle>This will be an interim transcript</AlertTitle>
                 <AlertDescription>

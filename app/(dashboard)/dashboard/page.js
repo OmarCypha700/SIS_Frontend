@@ -2,8 +2,9 @@
 
 import Link from "next/link";
 import {
-  AlertTriangle, Award, BadgeCheck, BarChart3, BookOpen, CalendarClock, CheckCircle2, ClipboardCheck, ClipboardList, FilePen,
-  GraduationCap, History, Inbox, Layers, ListChecks, ListTodo, Mail, Scale, Sigma, Users,
+  AlertTriangle, Award, BadgeCheck, Banknote, BarChart3, BookOpen, CalendarCheck, CalendarClock, CheckCircle2, ClipboardCheck,
+  ClipboardList, CreditCard, FilePen, GraduationCap, History, Inbox, Layers, ListChecks, ListTodo, Mail, Scale, Sigma, Users,
+  Wallet,
 } from "lucide-react";
 
 import { useAuth } from "@/components/auth/auth-provider";
@@ -15,7 +16,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Progress } from "@/components/ui/progress";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useApi } from "@/hooks/use-api";
-import { formatDate, formatDateTime, titleCase } from "@/lib/format";
+import { formatDate, formatDateTime, formatMoney, titleCase } from "@/lib/format";
 
 export default function DashboardPage() {
   const { user } = useAuth();
@@ -122,7 +123,7 @@ function DeliveryCard() {
           <p className="text-sm text-muted-foreground">Devices with push</p>
           <p className="text-2xl font-semibold tabular-nums">{push.enabled ? push.devices : "Off"}</p>
           <p className="text-xs text-muted-foreground">
-            {push.enabled ? `${push.pending} waiting to be sent` : "Set the VAPID keys on the server to turn push on"}
+            {push.enabled ? `${push.pending} waiting to be sent` : "Push notifications have not been set up on the server yet"}
           </p>
         </div>
       </CardContent>
@@ -385,18 +386,69 @@ function TeachingCard({ courses, title }) {
 /** Accounts Office: clearance progress for the current semester. */
 function AccountsDashboard({ data }) {
   const c = data.clearance;
-  if (!c) return <EmptyState title="No current semester" description="Clearance starts once the registry sets the current semester." />;
   return (
     <div className="space-y-6">
-      <div className="grid gap-4 sm:grid-cols-3">
-        <StatCard label="Students who may register" value={c.eligible} icon={Users} tone="brand" />
-        <StatCard label="Financially cleared" value={c.cleared} icon={CheckCircle2} tone="green" />
-        <StatCard label="Not yet cleared" value={c.not_cleared} icon={AlertTriangle} tone="amber" />
+      <CollectionsCards />
+      {c ? (
+        <div className="grid gap-4 sm:grid-cols-3">
+          <StatCard label="Students who may register" value={c.eligible} icon={Users} tone="brand" />
+          <StatCard label="Financially cleared" value={c.cleared} icon={CheckCircle2} tone="green" />
+          <StatCard label="Not yet cleared" value={c.not_cleared} icon={AlertTriangle} tone="amber" />
+        </div>
+      ) : (
+        <EmptyState title="No current semester" description="Clearance starts once the registry sets the current semester." />
+      )}
+      <div className="flex flex-wrap gap-2">
+        <Button asChild>
+          <Link href="/finance/payments">Payments</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/finance/accounts">Student accounts</Link>
+        </Button>
+        <Button asChild variant="outline">
+          <Link href="/finance/clearance">Financial clearance</Link>
+        </Button>
       </div>
-      <Button asChild>
-        <Link href="/finance/clearance">Open financial clearance</Link>
-      </Button>
     </div>
+  );
+}
+
+function CollectionsCards() {
+  const { data } = useApi("/payments/summary/");
+  if (!data) return null;
+  return (
+    <div className="grid grid-cols-2 gap-3 sm:gap-4 lg:grid-cols-4">
+      <StatCard label="Collected today" value={formatMoney(data.collected_today)} hint={`${data.payments_today} payments`} icon={CalendarCheck} tone="green" />
+      <StatCard label="Collected in total" value={formatMoney(data.collected)} hint={`of ${formatMoney(data.billed)} billed`} icon={Banknote} tone="brand" />
+      <StatCard label="Outstanding" value={formatMoney(data.outstanding)} hint={`${data.students_owing} students owing`} icon={Wallet} tone="amber" />
+      <StatCard label="Payments to check" value={data.needs_attention} icon={AlertTriangle} tone={data.needs_attention ? "red" : "green"} />
+    </div>
+  );
+}
+
+/** A student's fees at a glance, once the institution bills through the system. */
+function StudentFeesCard() {
+  const { data } = useApi("/my-fees/");
+  const summary = data?.summary;
+  if (!summary || (!summary.billed && Number(summary.balance) === 0)) return null;
+  const owed = Number(summary.balance);
+  return (
+    <Card>
+      <CardHeader className="flex flex-row items-start justify-between gap-3">
+        <div>
+          <CardTitle className="flex items-center gap-2">
+            <IconTile icon={CreditCard} tone={summary.meets || owed <= 0 ? "green" : "amber"} size="sm" /> Fees
+          </CardTitle>
+          <CardDescription>
+            {owed > 0 ? `You owe ${formatMoney(owed)}.` : "You are paid up."}
+            {summary.billed && !summary.meets && Number(summary.short_by) > 0 ? ` Pay ${formatMoney(summary.short_by)} more to register.` : ""}
+          </CardDescription>
+        </div>
+        <Button asChild size="sm" variant={owed > 0 && data.online_enabled ? "default" : "outline"}>
+          <Link href="/fees">{owed > 0 && data.online_enabled ? "Pay now" : "View"}</Link>
+        </Button>
+      </CardHeader>
+    </Card>
   );
 }
 
@@ -472,6 +524,7 @@ function StudentDashboard({ data }) {
           className="col-span-2 lg:col-span-1"
         />
       </div>
+      <StudentFeesCard />
       <div className="grid gap-4 lg:grid-cols-3">
         <Card className="lg:col-span-2">
           <CardHeader className="flex flex-row items-start justify-between gap-3">

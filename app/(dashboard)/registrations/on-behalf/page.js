@@ -108,7 +108,7 @@ function OnBehalfForm({ studentId, onChangeStudent }) {
           </Alert>
         )}
         {!data.window_open && (
-          <Alert>
+          <Alert variant="warning">
             <AlertDescription>{data.window_message} As registry staff you may still register this student.</AlertDescription>
           </Alert>
         )}

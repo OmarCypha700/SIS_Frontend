@@ -135,7 +135,7 @@ export default function ResitSheetPage() {
       </Alert>
       <SignoffWarnings warnings={sheet.signoff_warnings} />
       {sheet.status === "RETURNED" && sheet.last_comment && (
-        <Alert className="mb-4">
+        <Alert variant="warning" className="mb-4">
           <Undo2 />
           <AlertTitle>Returned for correction</AlertTitle>
           <AlertDescription>{sheet.last_comment}</AlertDescription>

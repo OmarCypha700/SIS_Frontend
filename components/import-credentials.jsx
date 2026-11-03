@@ -95,7 +95,7 @@ code{font-size:14pt;font-weight:700;letter-spacing:.06em}
   }
 
   return (
-    <Alert className="border-amber-300 bg-amber-50 text-amber-950 dark:border-amber-900 dark:bg-amber-950 dark:text-amber-100">
+    <Alert variant="warning">
       <KeyRound />
       <AlertTitle>Save these {credentials.length} temporary password(s) now</AlertTitle>
       <AlertDescription className="space-y-3">

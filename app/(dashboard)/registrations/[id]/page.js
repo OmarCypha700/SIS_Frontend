@@ -62,7 +62,7 @@ export default function RegistrationDetailPage() {
         }
       />
       {data.status === "PENDING" && data.requires_approval_reason && (
-        <Alert className="mb-4">
+        <Alert variant="warning" className="mb-4">
           <AlertTitle>Approval required</AlertTitle>
           <AlertDescription>{data.requires_approval_reason}</AlertDescription>
         </Alert>

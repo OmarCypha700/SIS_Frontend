@@ -178,7 +178,7 @@ function SkippedDialog({ result, noun, onClose }) {
           </DialogDescription>
         </DialogHeader>
         {outcome.done.length > 0 && (
-          <Alert>
+          <Alert variant="success">
             <CheckCircle2 />
             <AlertTitle>{action.done(outcome.done.length)}</AlertTitle>
           </Alert>

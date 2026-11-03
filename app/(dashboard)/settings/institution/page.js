@@ -21,6 +21,7 @@ const TEXT_FIELDS = [
   "name", "short_name", "motto", "email", "phone", "website", "physical_address", "postal_address", "country", "timezone",
   "primary_color", "academic_year_format", "student_number_format", "cgpa_retake_policy", "gpa_decimal_places", "result_slip_footer",
   "transcript_signatory_name", "transcript_signatory_title", "transcript_serial_format", "transcript_footer",
+  "fee_billing_period", "registration_payment_percent", "payment_fee_percent", "payment_fee_cap",
 ];
 const FLAGS = [
   ["allow_higher_level_courses", "Students may register for courses above their level"],
@@ -45,7 +46,9 @@ export default function InstitutionSettingsPage() {
   const [logo, setLogo] = useState(null);
 
   useEffect(() => {
-    if (data) reset(Object.fromEntries([...TEXT_FIELDS, ...FLAGS.map(([f]) => f)].map((f) => [f, data[f] ?? ""])));
+    if (data) {
+      reset(Object.fromEntries([...TEXT_FIELDS, ...FLAGS.map(([f]) => f), "online_payments_enabled"].map((f) => [f, data[f] ?? ""])));
+    }
   }, [data, reset]);
 
   async function onSubmit(values) {
@@ -59,7 +62,7 @@ export default function InstitutionSettingsPage() {
       reload();
       reloadShell();
     } catch (e) {
-      const matched = applyFieldErrors(e, setError, [...TEXT_FIELDS, "logo"]);
+      const matched = applyFieldErrors(e, setError, [...TEXT_FIELDS, "logo", "online_payments_enabled"]);
       toast.error(matched ? "Please correct the highlighted fields." : errorMessage(e));
     }
   }
@@ -169,6 +172,56 @@ export default function InstitutionSettingsPage() {
                   {(aria) => <Textarea rows={2} {...aria} {...register("result_slip_footer")} />}
                 </Field>
               </div>
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>School fees</CardTitle>
+              <CardDescription>
+                How fees are billed, how much a student must pay to be cleared for registration automatically, and online payment
+                for students. Earlier balances must always be paid in full first.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <Field id="fee_billing_period" label="Fees are billed">
+                {(aria) => (
+                  <NativeSelect {...aria} {...register("fee_billing_period")}>
+                    <option value="SEMESTER">Each semester</option>
+                    <option value="ACADEMIC_YEAR">Each academic year</option>
+                  </NativeSelect>
+                )}
+              </Field>
+              <Field id="registration_payment_percent" label="Share of fees to register (%)" error={errors.registration_payment_percent?.message}
+                     hint="Students are cleared automatically once they have paid this share of the current bill.">
+                {(aria) => <Input type="number" min="0" max="100" step="1" {...aria} {...register("registration_payment_percent")} />}
+              </Field>
+              <Field id="payment_fee_percent" label="Transaction fee rate (%)" error={errors.payment_fee_percent?.message}
+                     hint="The payment service's charge, added on top so the institution receives the full fee.">
+                {(aria) => <Input type="number" min="0" max="10" step="0.01" {...aria} {...register("payment_fee_percent")} />}
+              </Field>
+              <Field id="payment_fee_cap" label="Largest transaction fee per payment (GHS)" error={errors.payment_fee_cap?.message}
+                     hint="Leave blank if there is no cap.">
+                {(aria) => <Input type="number" min="0" step="0.01" {...aria} {...register("payment_fee_cap")} />}
+              </Field>
+              <Controller
+                name="online_payments_enabled"
+                control={control}
+                render={({ field }) => (
+                  <div className="space-y-1 sm:col-span-2">
+                    <label className="flex items-start gap-2 text-sm">
+                      <Checkbox checked={Boolean(field.value)} disabled={!data.payment_gateway_configured && !field.value}
+                                onCheckedChange={(v) => field.onChange(Boolean(v))} className="mt-0.5" />
+                      Students can pay fees online (mobile money, card or bank)
+                    </label>
+                    {(errors.online_payments_enabled || !data.payment_gateway_configured) && (
+                      <p className="text-xs text-muted-foreground">
+                        {errors.online_payments_enabled?.message ||
+                          "Online payment has not been set up on the server yet. Ask your system administrator."}
+                      </p>
+                    )}
+                  </div>
+                )}
+              />
             </CardContent>
           </Card>
           <Card>

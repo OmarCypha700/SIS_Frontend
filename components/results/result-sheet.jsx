@@ -106,14 +106,14 @@ export function ResultSheet({ sheet, onChange }) {
 
       <SignoffWarnings warnings={sheet.signoff_warnings} />
       {sheet.status === "RETURNED" && sheet.last_comment && (
-        <Alert>
+        <Alert variant="warning">
           <Undo2 />
           <AlertTitle>Returned for correction</AlertTitle>
           <AlertDescription>{sheet.last_comment}</AlertDescription>
         </Alert>
       )}
       {sheet.status === "PUBLISHED" && (
-        <Alert>
+        <Alert variant="success">
           <CheckCircle2 />
           <AlertTitle>Published</AlertTitle>
           <AlertDescription>

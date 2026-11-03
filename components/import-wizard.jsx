@@ -62,7 +62,7 @@ export function ImportWizard({
   return (
     <div className="space-y-6">
       {done && (
-        <Alert>
+        <Alert variant="success">
           <CheckCircle2 />
           <AlertTitle>Import complete</AlertTitle>
           <AlertDescription>{successMessage ? successMessage(done) : `${done.created} record(s) were created.`}</AlertDescription>

@@ -18,7 +18,7 @@ import { cn } from "@/lib/utils";
  * Server-side paginated table.
  *
  * columns: [{ key, header, cell?: (row) => node, sortKey?, className? }]
- * filters: [{ key, label, options?: [{value,label}], endpoint?, optionValue?, optionLabel? }]
+ * filters: [{ key, label, options?: [{value,label}], endpoint?, optionValue?, optionLabel?, defaultValue? }]
  * selectable: adds row checkboxes. `selectedIds` / `onSelectionChange(ids)` hold the selection, which
  *   is kept across pages and cleared when the search or filters change.
  */
@@ -31,7 +31,8 @@ export function DataTable({
   const [page, setPage] = useState(1);
   const [search, setSearch] = useState("");
   const [ordering, setOrdering] = useState(defaultOrdering);
-  const [filterValues, setFilterValues] = useState({});
+  const [filterValues, setFilterValues] = useState(() =>
+    Object.fromEntries(filters.filter((f) => f.defaultValue).map((f) => [f.key, f.defaultValue])));
   const debouncedSearch = useDebounced(search);
 
   const apiParams = useMemo(() => {

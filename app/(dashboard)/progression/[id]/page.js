@@ -195,7 +195,7 @@ export default function ProgressionReviewPage() {
         </Alert>
       )}
       {review.status === "DRAFT" && review.outstanding.length > 0 && (
-        <Alert variant="destructive" className="mb-4">
+        <Alert variant="warning" className="mb-4">
           <TriangleAlert />
           <AlertTitle>Outcomes for this semester can still change</AlertTitle>
           <AlertDescription>

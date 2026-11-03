@@ -84,7 +84,7 @@ export function ImportMarksDialog({ sheet, onClose, onApplied }) {
               {preview.invalid_rows > 0 && <span className="text-destructive"> {preview.invalid_rows} row(s) have errors and will be skipped.</span>}
             </p>
             {(preview.ignored_columns.length > 0 || preview.unmapped_components.length > 0 || preview.students_not_in_file.length > 0) && (
-              <Alert>
+              <Alert variant="warning">
                 <AlertTriangle />
                 <AlertDescription className="space-y-1">
                   {preview.ignored_columns.length > 0 && <p>Ignored columns: {preview.ignored_columns.join(", ")}.</p>}

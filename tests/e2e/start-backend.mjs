@@ -19,6 +19,10 @@ const env = {
   THROTTLE_LOGIN: "1000/min",
   CSRF_TRUSTED_ORIGINS: "http://localhost:3100,http://127.0.0.1:3100",
   DJANGO_DEBUG: "True",
+  // Online fee payment against the fake gateway in fake-paystack.mjs, never the real Paystack.
+  PAYSTACK_SECRET_KEY: "sk_test_e2e",
+  PAYSTACK_BASE_URL: "http://127.0.0.1:8199",
+  FRONTEND_URL: "http://localhost:3100",
 };
 
 rmSync(dbPath, { force: true });
@@ -31,7 +35,11 @@ const server = spawn(python, [path.join(backendDir, "manage.py"), "runserver", `
   stdio: "inherit",
   cwd: backendDir,
 });
-const stop = () => server.kill();
+const gateway = spawn(process.execPath, [path.join(import.meta.dirname, "fake-paystack.mjs")], { stdio: "inherit" });
+const stop = () => {
+  server.kill();
+  gateway.kill();
+};
 process.on("SIGINT", stop);
 process.on("SIGTERM", stop);
 process.on("exit", stop);
