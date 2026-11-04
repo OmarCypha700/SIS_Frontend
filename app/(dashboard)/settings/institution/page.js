@@ -22,6 +22,7 @@ const TEXT_FIELDS = [
   "primary_color", "academic_year_format", "student_number_format", "cgpa_retake_policy", "gpa_decimal_places", "result_slip_footer",
   "transcript_signatory_name", "transcript_signatory_title", "transcript_serial_format", "transcript_footer",
   "fee_billing_period", "registration_payment_percent", "payment_fee_percent", "payment_fee_cap",
+  "late_registration_penalty",
 ];
 const FLAGS = [
   ["allow_higher_level_courses", "Students may register for courses above their level"],
@@ -194,6 +195,10 @@ export default function InstitutionSettingsPage() {
               <Field id="registration_payment_percent" label="Share of fees to register (%)" error={errors.registration_payment_percent?.message}
                      hint="Students are cleared automatically once they have paid this share of the current bill.">
                 {(aria) => <Input type="number" min="0" max="100" step="1" {...aria} {...register("registration_payment_percent")} />}
+              </Field>
+              <Field id="late_registration_penalty" label="Late registration penalty (GHS)" error={errors.late_registration_penalty?.message}
+                     hint="Charged to a student who registers after the window closes, during the semester's late registration period. It must be paid in full before they can register. 0: no penalty.">
+                {(aria) => <Input type="number" min="0" step="0.01" {...aria} {...register("late_registration_penalty")} />}
               </Field>
               <Field id="payment_fee_percent" label="Transaction fee rate (%)" error={errors.payment_fee_percent?.message}
                      hint="The payment service's charge, added on top so the institution receives the full fee.">

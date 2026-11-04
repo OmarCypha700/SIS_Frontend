@@ -40,6 +40,10 @@ const SEMESTER_FIELDS = [
   { name: "end_date", label: "End date", type: "date", required: true },
   { name: "registration_start", label: "Registration opens", type: "datetime", required: true },
   { name: "registration_end", label: "Registration closes", type: "datetime", required: true },
+  {
+    name: "late_registration_end", label: "Late registration closes", type: "datetime",
+    hint: "Optional. Students who missed registration may register until then after paying the late registration penalty",
+  },
   { name: "add_drop_deadline", label: "Add/drop deadline", type: "datetime", hint: "Optional; students may amend until then" },
   { name: "result_entry_deadline", label: "Result entry deadline", type: "datetime" },
   { name: "result_publication_date", label: "Result publication date", type: "date" },
@@ -64,6 +68,9 @@ const SEMESTER_COLUMNS = [
       <span className="text-sm">
         {formatDateTime(r.registration_start)} – {formatDateTime(r.registration_end)}
         {r.registration_open && <span className="ml-2 text-xs text-emerald-600">open</span>}
+        {r.late_registration_end && (
+          <span className="block text-xs text-muted-foreground">Late registration until {formatDateTime(r.late_registration_end)}</span>
+        )}
       </span>
     ),
   },

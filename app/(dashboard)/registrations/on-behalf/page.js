@@ -8,6 +8,7 @@ import { toast } from "sonner";
 import { ErrorState, LoadingBlock, PageHeader, RoleGate } from "@/components/common";
 import { Field } from "@/components/forms/field";
 import { CourseSelector, CreditSummary, RegistrationErrors, useCourseSelection } from "@/components/registration/course-selector";
+import { LatePenaltyNotice, lateBlocked } from "@/components/registration/late-penalty-notice";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -66,7 +67,7 @@ function StudentPicker({ onPick }) {
 
 function OnBehalfForm({ studentId, onChangeStudent }) {
   const router = useRouter();
-  const { data, error, loading, reload } = useApi("/registrations/options/", { student: studentId });
+  const { data, error, loading, reload, setData } = useApi("/registrations/options/", { student: studentId });
   const { selected, toggle, totals } = useCourseSelection(data);
   const [reason, setReason] = useState("");
   const [submitError, setSubmitError] = useState(null);
@@ -111,6 +112,23 @@ function OnBehalfForm({ studentId, onChangeStudent }) {
           <Alert variant="warning">
             <AlertDescription>{data.window_message} As registry staff you may still register this student.</AlertDescription>
           </Alert>
+        )}
+        {data.late_registration && (
+          <>
+            <LatePenaltyNotice
+              state={data.late_registration}
+              url="/registrations/on-behalf/late-penalty/"
+              body={{ student: Number(studentId), semester: data.semester.id }}
+              onAdded={(payload) => setData(payload)}
+              forStaff
+            />
+            {lateBlocked(data.late_registration) && (
+              <p className="text-xs text-muted-foreground">
+                The student pays it like any other fee. Only an administrator can register them before it is paid; the override is
+                recorded in the audit log. The Accounts Office can waive it, for example on medical grounds.
+              </p>
+            )}
+          </>
         )}
         {submitError && <RegistrationErrors error={submitError} />}
         <Card>

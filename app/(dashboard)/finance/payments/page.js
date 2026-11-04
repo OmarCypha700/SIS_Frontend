@@ -18,7 +18,7 @@ import { useApi } from "@/hooks/use-api";
 import { api, downloadFile, errorMessage, fieldErrors } from "@/lib/api";
 import { formatDateTime, formatMoney } from "@/lib/format";
 
-const STATUS_COLOUR = { SUCCESS: "PUBLISHED", PENDING: "PENDING", FAILED: "REJECTED", ABANDONED: "CLOSED", MISMATCH: "REJECTED" };
+const STATUS_COLOUR = { SUCCESS: "PUBLISHED", PENDING: "PENDING", FAILED: "REJECTED", ABANDONED: "CLOSED", MISMATCH: "REJECTED", REVERSED: "CANCELLED" };
 const METHOD = { mobile_money: "Mobile money", card: "Card", bank: "Bank", bank_transfer: "Bank transfer", cash: "Cash", cheque: "Cheque" };
 
 export default function PaymentsPage() {
@@ -27,6 +27,7 @@ export default function PaymentsPage() {
   const [importing, setImporting] = useState(false);
   const [refresh, setRefresh] = useState(0);
   const [checking, setChecking] = useState(null);
+  const [exportParams, setExportParams] = useState({});
   const changed = () => {
     setRefresh((n) => n + 1);
     reloadSummary();
@@ -70,16 +71,25 @@ export default function PaymentsPage() {
         </span>
       ),
     },
-    { key: "status", header: "Status", cell: (r) => <StatusBadge status={STATUS_COLOUR[r.status]} label={r.status_display} /> },
+    {
+      key: "status",
+      header: "Status",
+      cell: (r) => (
+        <span>
+          <StatusBadge status={STATUS_COLOUR[r.status]} label={r.status_display} />
+          {r.reversal_reason && <span className="mt-0.5 block max-w-48 whitespace-normal text-xs text-muted-foreground">{r.reversal_reason}</span>}
+        </span>
+      ),
+    },
     { key: "receipt_number", header: "Receipt / reference", cell: (r) => <span className="text-xs">{r.receipt_number || r.reference}</span> },
     {
       key: "actions",
       header: <span className="sr-only">Actions</span>,
       className: "text-right",
       cell: (r) =>
-        r.status === "SUCCESS" ? (
+        r.status === "SUCCESS" || r.status === "REVERSED" ? (
           <Button size="sm" variant="outline" onClick={() => downloadFile(`/payments/${r.id}/receipt/`, {}, `receipt-${r.receipt_number}.pdf`).catch((e) => toast.error(errorMessage(e)))}>
-            <Download /> Receipt
+            <Download /> {r.status === "REVERSED" ? "Cancelled receipt" : "Receipt"}
           </Button>
         ) : r.status === "PENDING" && r.source === "ONLINE" ? (
           <Button size="sm" variant="outline" disabled={checking === r.id} onClick={() => check(r)}>
@@ -96,7 +106,8 @@ export default function PaymentsPage() {
         description="Payments made online by students and payments recorded by the Accounts Office."
         actions={
           <>
-            <ExportMenu url="/payments/export/" filename="payments" />
+            <ExportMenu url="/payments/export/" params={exportParams} filename="payments"
+                        label={Object.keys(exportParams).length ? "Export filtered" : "Export"} />
             <Button variant="outline" onClick={() => setImporting(true)}>
               <FileUp /> Import bank statement
             </Button>
@@ -127,6 +138,13 @@ export default function PaymentsPage() {
         searchPlaceholder="Search receipt, reference, student…"
         refreshKey={refresh}
         pageSize={50}
+        onData={(_, query) => {
+          // The export downloads exactly what the filters and search show, every page of it.
+          const rest = { ...query };
+          delete rest.page;
+          delete rest.page_size;
+          setExportParams(rest);
+        }}
         filters={[
           {
             key: "status",
@@ -134,9 +152,11 @@ export default function PaymentsPage() {
             defaultValue: initialStatus || undefined,
             options: [
               { value: "SUCCESS", label: "Successful" }, { value: "PENDING", label: "Pending" }, { value: "MISMATCH", label: "Needs attention" },
-              { value: "FAILED", label: "Failed" }, { value: "ABANDONED", label: "Not completed" },
+              { value: "FAILED", label: "Failed" }, { value: "ABANDONED", label: "Not completed" }, { value: "REVERSED", label: "Reversed" },
             ],
           },
+          { key: "date_from", label: "Paid from", type: "date" },
+          { key: "date_to", label: "to", type: "date" },
           { key: "source", label: "Source", options: [{ value: "ONLINE", label: "Online" }, { value: "MANUAL", label: "Recorded" }] },
         ]}
         emptyTitle="No payments yet"

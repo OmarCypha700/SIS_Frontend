@@ -134,8 +134,10 @@ function useSubmit(onDone) {
     setPending(true);
     setErrors({});
     try {
-      await request();
+      const response = await request();
       toast.success(message);
+      // Clearance is never revoked automatically: say when a change leaves a cleared student short.
+      if (response?.data?.warning) toast.warning(response.data.warning, { duration: 15000 });
       onDone();
     } catch (e) {
       setErrors({ ...fieldErrors(e), form: errorMessage(e) });
@@ -248,8 +250,10 @@ function ReverseDialog({ studentId, line, onClose, onDone }) {
         <DialogHeader>
           <DialogTitle>Reverse this entry?</DialogTitle>
           <DialogDescription>
-            {line.description} ({formatMoney(Math.abs(Number(line.amount)))}). A reversing entry is added; the original stays on the
-            statement.
+            {line.description} ({formatMoney(Math.abs(Number(line.amount)))}). Use this only for an entry made in error: a
+            reversing entry is added and the original stays on the statement. No money is returned; to give money back, record
+            a refund instead.
+            {line.kind === "PAYMENT" && " The payment's receipt will be marked CANCELLED."}
           </DialogDescription>
         </DialogHeader>
         <Field id="reverse-reason" label="Reason" required error={errors.reason || errors.form}>

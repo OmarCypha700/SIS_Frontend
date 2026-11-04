@@ -81,6 +81,12 @@ test("the Accounts Office records a bank payment on a student's account", async 
 
   await open(page, "/finance/payments");
   await expect(page.getByText("Collected today")).toBeVisible();
+  // Today's payments only; the export then downloads just those.
+  const today = new Date().toISOString().slice(0, 10);
+  await page.getByLabel("Paid from").fill(today);
+  await page.getByLabel("to", { exact: true }).fill(today);
+  await expect(page.getByRole("button", { name: "Export filtered" })).toBeVisible();
+  await expect(page.getByRole("row").filter({ hasText: owing.student_number }).first()).toBeVisible();
 });
 
 test("a bank statement is previewed, a possible duplicate is held back, and the rest is recorded", async ({ page }) => {

@@ -18,7 +18,8 @@ import { cn } from "@/lib/utils";
  * Server-side paginated table.
  *
  * columns: [{ key, header, cell?: (row) => node, sortKey?, className? }]
- * filters: [{ key, label, options?: [{value,label}], endpoint?, optionValue?, optionLabel?, defaultValue? }]
+ * filters: [{ key, label, options?: [{value,label}], endpoint?, optionValue?, optionLabel?, defaultValue?, type? }]
+ *   type "date" shows a date picker instead of a list (the value is YYYY-MM-DD).
  * selectable: adds row checkboxes. `selectedIds` / `onSelectionChange(ids)` hold the selection, which
  *   is kept across pages and cleared when the search or filters change.
  */
@@ -233,6 +234,20 @@ export function DataTable({
 }
 
 function FilterSelect({ filter, value, onChange }) {
+  if (filter.type === "date") return <DateFilter filter={filter} value={value} onChange={onChange} />;
+  return <OptionFilter filter={filter} value={value} onChange={onChange} />;
+}
+
+function DateFilter({ filter, value, onChange }) {
+  return (
+    <label className="flex items-center gap-1.5 text-xs text-muted-foreground">
+      {filter.label}
+      <Input type="date" value={value} max={filter.max} onChange={(e) => onChange(e.target.value)} className="h-8 w-auto" />
+    </label>
+  );
+}
+
+function OptionFilter({ filter, value, onChange }) {
   const { data } = useApi(filter.endpoint || null, { page_size: 200 });
   const options = filter.options
     ?? (Array.isArray(data) ? data : data?.results ?? []).map((item) => ({

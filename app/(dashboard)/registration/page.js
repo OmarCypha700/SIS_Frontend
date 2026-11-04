@@ -7,6 +7,7 @@ import { toast } from "sonner";
 
 import { EmptyState, ErrorState, LoadingBlock, PageHeader, RoleGate, StatusBadge } from "@/components/common";
 import { CourseSelector, CreditSummary, RegistrationErrors, useCourseSelection } from "@/components/registration/course-selector";
+import { LatePenaltyNotice, lateBlocked } from "@/components/registration/late-penalty-notice";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from "@/components/ui/card";
@@ -41,7 +42,8 @@ export default function StudentRegistrationPage() {
   }
 
   const reviewDisabled =
-    !data || !data.window_open || !data.can_register || Boolean(data.financial_clearance?.message) || selected.size === 0;
+    !data || !data.window_open || !data.can_register || Boolean(data.financial_clearance?.message)
+    || lateBlocked(data.late_registration) || selected.size === 0;
   const reviewLabel = data?.registration ? "Review changes" : "Review registration";
   function startReview() {
     setSubmitError(null);
@@ -82,6 +84,15 @@ export default function StudentRegistrationPage() {
                 <AlertTitle>Registration is closed</AlertTitle>
                 <AlertDescription>{data.window_message}</AlertDescription>
               </Alert>
+            )}
+            {data.can_register && data.window_open && data.late_registration && (
+              <LatePenaltyNotice
+                state={data.late_registration}
+                url="/registrations/late-penalty/"
+                body={{ semester: data.semester.id }}
+                onAdded={(payload) => setData(payload)}
+                payHref="/fees"
+              />
             )}
             {submitError && <RegistrationErrors error={submitError} />}
 
@@ -178,6 +189,12 @@ export default function StudentRegistrationPage() {
                     <dt className="text-muted-foreground">Closes</dt>
                     <dd>{formatDateTime(data.semester.registration_end)}</dd>
                   </div>
+                  {data.semester.late_registration_end && (
+                    <div className="flex justify-between">
+                      <dt className="text-muted-foreground">Late registration until</dt>
+                      <dd>{formatDateTime(data.semester.late_registration_end)}</dd>
+                    </div>
+                  )}
                   {data.semester.add_drop_deadline && (
                     <div className="flex justify-between">
                       <dt className="text-muted-foreground">Add/drop until</dt>
