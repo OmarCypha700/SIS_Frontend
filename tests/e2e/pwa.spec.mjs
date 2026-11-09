@@ -10,6 +10,12 @@ test("the portal is an installable app with an offline page", async ({ page, con
   expect(manifest.icons.some((icon) => icon.purpose === "maskable")).toBeTruthy();
   const icon = await page.request.get(manifest.icons[0].src);
   expect(icon.headers()["content-type"]).toBe("image/png");
+  // The browser-tab icon and the iPhone opening screen come from the institution's logo too.
+  expect((await page.request.get("/favicon.ico")).headers()["content-type"]).toBe("image/png");
+  await open(page, "/login");
+  const startup = await page.locator('link[rel="apple-touch-startup-image"]').first().getAttribute("href");
+  expect((await page.request.get(startup)).headers()["content-type"]).toBe("image/png");
+  expect(await page.locator('link[rel="icon"]').first().getAttribute("href")).toContain("/api/v1/institution/app-icon/");
 
   await login(page, ACCOUNTS.student);
   const scope = await page.evaluate(async () => (await navigator.serviceWorker.ready).scope);
@@ -40,4 +46,18 @@ test("notification settings are on the profile page", async ({ page, context }) 
   await expect(page.getByTestId("unread-count")).toBeVisible();
   await open(page, "/notifications");
   await expect(page.getByRole("button", { name: /Test notification/ }).first()).toBeVisible();
+});
+
+test("the app offers to turn on notifications, and 'Not now' is remembered", async ({ page }) => {
+  // Headless Chromium reports notifications as blocked; act as a device that has not been asked yet.
+  await page.context().addInitScript(() => Object.defineProperty(Notification, "permission", { get: () => "default" }));
+  await login(page, ACCOUNTS.student, undefined, { pushPrompt: true });
+  const prompt = page.getByRole("dialog", { name: "Turn on notifications" });
+  await expect(prompt).toBeVisible({ timeout: 10_000 });
+  await expect(prompt.getByRole("button", { name: "Turn on" })).toBeVisible();
+  await prompt.getByRole("button", { name: "Not now" }).first().click();
+  await expect(prompt).toHaveCount(0);
+  await page.reload();
+  await page.waitForTimeout(2500); // the prompt would appear after 1.5 s
+  await expect(page.getByRole("dialog", { name: "Turn on notifications" })).toHaveCount(0);
 });

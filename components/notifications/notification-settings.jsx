@@ -13,7 +13,7 @@ import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import { api, errorMessage } from "@/lib/api";
 import { playNotificationSound } from "@/lib/notification-sound";
-import { currentSubscription, disablePush, enablePush, isIos, pushSupport } from "@/lib/push";
+import { currentSubscription, disablePush, enablePush, isIos, pushSupport, setPushOptedOut } from "@/lib/push";
 import { useInstallPrompt, useStandalone } from "@/lib/pwa";
 
 /** Profile → Notifications: push on this device, sound, email alerts (staff) and installing the app. */
@@ -36,6 +36,8 @@ export function NotificationSettings() {
     try {
       if (on) await enablePush();
       else await disablePush();
+      // Push is on by default; turning it off here is remembered on this device so it is not switched back on.
+      setPushOptedOut(!on);
       setPush((p) => ({ ...p, enabled: on, pending: false }));
       toast.success(on ? "Push notifications are on for this device." : "Push notifications are off for this device.");
     } catch (error) {
@@ -82,7 +84,7 @@ export function NotificationSettings() {
         <Setting
           id="push"
           label="Push notifications on this device"
-          hint="Alerts appear on this phone or computer even when the portal is closed. Turn this on separately on each device."
+          hint="On by default: alerts appear on this phone or computer even when the portal is closed. Your browser asks for permission once on each device."
           checked={push.enabled}
           disabled={push.support !== "supported" || push.pending}
           pending={push.pending}

@@ -22,8 +22,14 @@ const STATUS_OPTIONS = [
 ];
 
 const FIELDS = [
-  { name: "course", label: "Course", type: "relation", endpoint: "/courses/", params: { is_active: true }, optionLabel: (c) => `${c.code} ${c.title}`, required: true },
-  { name: "semester", label: "Semester", type: "relation", endpoint: "/semesters/", optionLabel: (s) => `${s.academic_year_name} ${s.name}`, required: true },
+  {
+    name: "course", label: "Course", type: "relation", endpoint: "/courses/", params: { is_active: true },
+    optionLabel: (c) => `${c.code} ${c.title}`, currentLabel: (r) => `${r.course_code} ${r.course_title}`, required: true,
+  },
+  {
+    name: "semester", label: "Semester", type: "relation", endpoint: "/semesters/",
+    optionLabel: (s) => `${s.academic_year_name} ${s.name}`, currentLabel: (r) => r.semester_name, required: true,
+  },
   { name: "capacity", label: "Capacity", type: "number", min: 1, hint: "Leave empty for no limit" },
   { name: "status", label: "Status", type: "select", options: STATUS_OPTIONS, required: true, default: "OPEN" },
   { name: "programmes", label: "Eligible programmes", type: "multirelation", endpoint: "/programmes/", optionLabel: (p) => `${p.code} ${p.name}`, hint: "Empty means programmes that have the course in their curriculum" },

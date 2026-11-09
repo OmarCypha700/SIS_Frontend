@@ -8,13 +8,15 @@
  * - Web push: shows the notification, updates the app-icon badge and tells open windows to play
  *   the notification sound and refresh the bell.
  */
-const VERSION = "v1";
+const VERSION = "v2";
 const SHELL_CACHE = `sis-shell-${VERSION}`;
 const ASSET_CACHE = `sis-assets-${VERSION}`;
 const OFFLINE_URL = "/offline";
 const PRECACHE = [OFFLINE_URL, "/sounds/notification.wav"];
-const ICON = "/api/v1/institution/app-icon/?size=192&purpose=any";
-const BADGE = "/api/v1/institution/app-icon/?size=96&purpose=badge";
+// The institution's logo as the notification's picture, like a sender's photo in a messaging app.
+const ICON = "/api/v1/institution/app-icon/?size=192&purpose=any&v=2";
+// The small status-bar icon: Android shows only its shape, so it is the white initials.
+const BADGE = "/api/v1/institution/app-icon/?size=96&purpose=badge&v=2";
 // Registered as /sw.js?dev=1 by `next dev`: build assets change on every edit, so skip caching them.
 const DEV = new URL(self.location.href).searchParams.has("dev");
 
@@ -97,38 +99,65 @@ self.addEventListener("push", (event) => {
     (async () => {
       await setBadge(Number(data.unread) || 0);
       await tellWindows({ type: "notification", notification: data });
+      // Shown like a message in a chat app: the institution's logo as the picture, the title in bold,
+      // the message preview underneath, and quick actions where the device supports them.
       await self.registration.showNotification(title, {
-        body: data.body || "",
+        body: data.body || "Tap to open.",
         icon: ICON,
         badge: BADGE,
         tag: data.tag || undefined,
         renotify: Boolean(data.tag),
         timestamp: Date.now(),
-        data: { link: data.link || "/notifications", id: data.id },
+        lang: "en",
+        vibrate: [80, 40, 80],
+        actions: data.id ? [{ action: "open", title: "Open" }, { action: "read", title: "Mark as read" }] : [],
+        data: { link: data.link || "/notifications", id: data.id, unread: Number(data.unread) || 0 },
       });
     })(),
   );
 });
 
+/** "Mark as read" from the notification itself, without opening the app. */
+async function markRead(id, unread) {
+  // Django checks a CSRF token on changes; a worker can read the cookie only where cookieStore exists.
+  const cookie = self.cookieStore ? await self.cookieStore.get("csrftoken") : null;
+  if (!cookie) return false;
+  const response = await fetch(`/api/v1/notifications/${id}/read/`, {
+    method: "POST",
+    credentials: "same-origin",
+    headers: { "X-CSRFToken": cookie.value },
+  });
+  if (!response.ok) return false;
+  await setBadge(Math.max(unread - 1, 0));
+  await tellWindows({ type: "notification-read", id });
+  return true;
+}
+
 self.addEventListener("notificationclick", (event) => {
   event.notification.close();
-  const { link = "/notifications", id } = event.notification.data || {};
+  const { link = "/notifications", id, unread = 0 } = event.notification.data || {};
+  if (event.action === "read" && id) {
+    // Falls back to opening the notification when it cannot be marked read in the background.
+    event.waitUntil(markRead(id, unread).then((done) => (done ? undefined : openTarget(link, id))));
+    return;
+  }
+  event.waitUntil(openTarget(link, id));
+});
+
+/** Open the notification's page (in a window already open if there is one). */
+async function openTarget(link, id) {
   const target = new URL(link, self.location.origin);
   if (id) target.searchParams.set("n", id); // the page marks it read
-  event.waitUntil(
-    (async () => {
-      const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
-      const existing = windows.find((client) => new URL(client.url).origin === self.location.origin);
-      if (existing) {
-        await existing.focus();
-        if ("navigate" in existing) return existing.navigate(target.href);
-        existing.postMessage({ type: "navigate", url: target.pathname + target.search });
-        return undefined;
-      }
-      return self.clients.openWindow(target.href);
-    })(),
-  );
-});
+  const windows = await self.clients.matchAll({ type: "window", includeUncontrolled: true });
+  const existing = windows.find((client) => new URL(client.url).origin === self.location.origin);
+  if (existing) {
+    await existing.focus();
+    if ("navigate" in existing) return existing.navigate(target.href);
+    existing.postMessage({ type: "navigate", url: target.pathname + target.search });
+    return undefined;
+  }
+  return self.clients.openWindow(target.href);
+}
 
 self.addEventListener("message", (event) => {
   const message = event.data || {};

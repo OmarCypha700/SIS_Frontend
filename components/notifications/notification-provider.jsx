@@ -74,6 +74,7 @@ export function NotificationProvider({ children }) {
         if (typeof message.notification?.unread === "number") apply(message.notification.unread);
         else refresh();
       }
+      if (message.type === "notification-read") refresh(); // marked read from the notification itself
       if (message.type === "navigate" && message.url) router.push(message.url);
     }
     navigator.serviceWorker.addEventListener("message", onMessage);

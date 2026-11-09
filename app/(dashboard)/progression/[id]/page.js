@@ -90,9 +90,10 @@ export default function ProgressionReviewPage() {
     {
       key: "reasons",
       header: "Why",
-      className: "max-w-96",
+      // Table cells do not wrap by default; long reasons would run under the next column.
+      className: "min-w-64 max-w-md whitespace-normal align-top",
       cell: (r) => (
-        <div className="space-y-0.5 text-xs">
+        <div className="space-y-0.5 text-xs leading-relaxed [overflow-wrap:anywhere]">
           {r.reasons.map((reason) => (
             <p key={reason}>{reason}</p>
           ))}

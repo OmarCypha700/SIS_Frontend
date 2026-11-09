@@ -27,6 +27,8 @@ const nextConfig = {
       { source: "/api/:path*/", destination: `${backendUrl}/api/:path*/` },
       { source: "/api/:path*", destination: `${backendUrl}/api/:path*` },
       { source: "/media/:path*", destination: `${backendUrl}/media/:path*` },
+      // Browsers also ask for /favicon.ico on their own: answer with the institution's logo.
+      { source: "/favicon.ico", destination: `${backendUrl}/api/v1/institution/app-icon/?size=48&purpose=any` },
     ];
   },
   async headers() {

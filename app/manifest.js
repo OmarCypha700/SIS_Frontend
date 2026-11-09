@@ -11,8 +11,14 @@ async function branding() {
   }
 }
 
+// Bump when the icon drawing changes: installed apps only refresh their icon when its address changes.
+const ICON_VERSION = 2;
+
 function icon(size, purpose = "any") {
-  return { src: `/api/v1/institution/app-icon/?size=${size}&purpose=${purpose}`, sizes: `${size}x${size}`, type: "image/png", purpose };
+  return {
+    src: `/api/v1/institution/app-icon/?size=${size}&purpose=${purpose}&v=${ICON_VERSION}`,
+    sizes: `${size}x${size}`, type: "image/png", purpose,
+  };
 }
 
 /** Web app manifest: makes the portal installable, branded with the institution's name, colour and logo. */

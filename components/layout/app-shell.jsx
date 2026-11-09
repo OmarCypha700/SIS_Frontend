@@ -14,6 +14,7 @@ import { PasswordCard } from "@/components/auth/password-card";
 import { Breadcrumbs } from "@/components/layout/breadcrumbs";
 import { NotificationBell } from "@/components/notifications/notification-bell";
 import { NotificationProvider } from "@/components/notifications/notification-provider";
+import { PushPrompt } from "@/components/notifications/push-prompt";
 import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -35,6 +36,7 @@ export function AppShell({ children, initial, sidebarCollapsed = false }) {
     <AuthProvider initial={initial}>
       <NotificationProvider>
         <ShellLayout initialCollapsed={sidebarCollapsed}>{children}</ShellLayout>
+        <PushPrompt />
       </NotificationProvider>
     </AuthProvider>
   );

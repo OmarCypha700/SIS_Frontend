@@ -18,7 +18,7 @@ import { fromDateTimeLocal, toDateTimeLocal } from "@/lib/format";
 import { cn } from "@/lib/utils";
 
 /**
- * Field config: { name, label, type, required, options, endpoint, optionLabel, hint, span, min, max, step }
+ * Field config: { name, label, type, required, options, endpoint, optionLabel, currentLabel, hint, span, min, max, step }
  * Types: text | textarea | number | date | datetime | checkbox | select | relation | multirelation | color
  */
 function toFormValues(fields, record) {
@@ -81,7 +81,8 @@ export function ResourceFormDialog({ open, onOpenChange, title, description, end
         </DialogHeader>
         <form onSubmit={handleSubmit(onSubmit)} className="grid gap-4 sm:grid-cols-2" noValidate>
           {fields.map((field) => (
-            <FieldControl key={field.name} field={field} register={register} control={control} error={formState.errors[field.name]?.message} />
+            <FieldControl key={field.name} field={field} record={record} register={register} control={control}
+                          error={formState.errors[field.name]?.message} />
           ))}
           <DialogFooter className="sm:col-span-2">
             <Button type="button" variant="outline" onClick={() => onOpenChange(false)} disabled={formState.isSubmitting}>
@@ -98,7 +99,7 @@ export function ResourceFormDialog({ open, onOpenChange, title, description, end
   );
 }
 
-function FieldControl({ field, register, control, error }) {
+function FieldControl({ field, record, register, control, error }) {
   const id = `field-${field.name}`;
   const rules = field.required ? { required: `${field.label} is required.` } : {};
   const span = field.span === 2 || ["textarea", "multirelation"].includes(field.type) ? "sm:col-span-2" : "";
@@ -148,7 +149,7 @@ function FieldControl({ field, register, control, error }) {
               </NativeSelect>
             );
           case "relation":
-            return <RelationSelect field={field} common={common} />;
+            return <RelationSelect field={field} record={record} control={control} rules={rules} aria={{ id, ...aria }} />;
           case "multirelation":
             return <MultiRelation field={field} control={control} />;
           default:
@@ -172,17 +173,36 @@ function useOptions(field) {
   };
 }
 
-function RelationSelect({ field, common }) {
+/**
+ * A list loaded from the API. It is controlled by the form, so a record's saved choice shows as soon
+ * as the options arrive (an uncontrolled select loses it, because the value is set before the
+ * options exist). A saved choice that is not in the loaded list, such as an inactive course, is
+ * still shown, labelled from the record with `field.currentLabel(record)`.
+ */
+function RelationSelect({ field, record, control, rules, aria }) {
   const { options, loading } = useOptions(field);
+  const saved = record?.[field.name];
+  const missing = saved !== null && saved !== undefined && saved !== "" && !options.some((o) => o.value === String(saved));
   return (
-    <NativeSelect {...common}>
-      <option value="">{loading ? "Loading…" : "Select…"}</option>
-      {options.map((o) => (
-        <option key={o.value} value={o.value}>
-          {o.label}
-        </option>
-      ))}
-    </NativeSelect>
+    <Controller
+      name={field.name}
+      control={control}
+      rules={rules}
+      render={({ field: f }) => (
+        <NativeSelect {...aria} name={f.name} ref={f.ref} value={f.value ?? ""} onChange={f.onChange} onBlur={f.onBlur}
+                      disabled={field.readOnly}>
+          <option value="">{loading ? "Loading…" : "Select…"}</option>
+          {missing && (
+            <option value={String(saved)}>{field.currentLabel ? field.currentLabel(record) : "Current selection"}</option>
+          )}
+          {options.map((o) => (
+            <option key={o.value} value={o.value}>
+              {o.label}
+            </option>
+          ))}
+        </NativeSelect>
+      )}
+    />
   );
 }
 

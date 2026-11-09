@@ -104,6 +104,12 @@ test("progression review is prepared, overridden and applied by the registry", a
   await dialog.getByRole("button", { name: "Prepare review" }).click();
   await expect(page).toHaveURL(/\/progression\/\d+$/);
   await expect(page.getByText("Draft: nothing has been changed on any student record yet.")).toBeVisible();
+  // Long reasons wrap inside the Why column instead of running under the actions button.
+  const why = page.getByRole("cell").filter({ has: page.locator("p") }).first();
+  expect(await why.evaluate((cell) => getComputedStyle(cell).whiteSpace)).toBe("normal");
+  const actions = page.getByRole("button", { name: /^Actions for / }).first();
+  const [cellBox, buttonBox] = [await why.boundingBox(), await actions.boundingBox()];
+  expect(cellBox.x + cellBox.width).toBeLessThanOrEqual(buttonBox.x + 1);
 
   // Change one outcome; a reason is required.
   await page.getByRole("button", { name: /^Actions for / }).first().click();

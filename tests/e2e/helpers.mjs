@@ -17,7 +17,17 @@ export async function open(page, url) {
   await page.waitForLoadState("networkidle");
 }
 
-export async function login(page, email, password = DEMO_PASSWORD) {
+export async function login(page, email, password = DEMO_PASSWORD, { pushPrompt = false } = {}) {
+  if (!pushPrompt) {
+    // The "Turn on notifications" prompt sits over the corner of the page; most journeys answer it "later".
+    await page.context().addInitScript(() => {
+      try {
+        window.localStorage.setItem("sis.push.askAfter", String(Date.now() + 86400000));
+      } catch {
+        // storage unavailable: nothing to do
+      }
+    });
+  }
   await page.context().clearCookies();
   await open(page, "/login");
   await page.getByLabel("Email").fill(email);

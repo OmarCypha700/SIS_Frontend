@@ -27,6 +27,15 @@ const env = {
 
 rmSync(dbPath, { force: true });
 const manage = (...args) => execFileSync(python, [path.join(backendDir, "manage.py"), ...args], { env, stdio: "inherit", cwd: backendDir });
+
+// Fresh push keys for this run only (never stored), so push counts as set up and the app offers it.
+const keys = execFileSync(python, [path.join(backendDir, "manage.py"), "generate_vapid_keys"], { env, cwd: backendDir })
+  .toString();
+for (const line of keys.split(/\r?\n/)) {
+  const match = line.match(/^(VAPID_(?:PUBLIC_KEY|PRIVATE_KEY))=(.+)$/);
+  if (match) env[match[1]] = match[2];
+}
+env.VAPID_SUBJECT = "mailto:e2e@example.test";
 manage("migrate", "--noinput", "-v", "0");
 manage("seed_demo", "--students", "16");
 
