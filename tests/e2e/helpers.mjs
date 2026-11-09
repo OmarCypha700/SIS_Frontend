@@ -32,7 +32,7 @@ export async function login(page, email, password = DEMO_PASSWORD, { pushPrompt 
   await open(page, "/login");
   await page.getByLabel("Email").fill(email);
   await page.getByLabel("Password", { exact: true }).fill(password);
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
   // Sign-in hashes the password and the next page loads the session on the server; allow for a busy test machine.
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
   await expect(page.getByRole("heading", { name: /Welcome/ })).toBeVisible();

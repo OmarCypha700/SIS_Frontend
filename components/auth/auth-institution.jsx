@@ -2,16 +2,20 @@
 
 import { createContext, useContext } from "react";
 
-import { useApi } from "@/hooks/use-api";
+import { useBranding } from "@/lib/branding-client";
 
 const InstitutionContext = createContext(null);
 
-/** Loads the public institution profile once for the sign-in pages and applies its brand colour. */
+/**
+ * The public institution profile for the sign-in pages. It comes from the copy saved on this
+ * device (lib/branding-client.js), so the logo, name and colour are there at once; the copy is
+ * refreshed in the background. On a device's very first visit it is null until the API answers.
+ */
 export function AuthInstitutionProvider({ className, children }) {
-  const { data } = useApi("/institution/");
+  const branding = useBranding();
   return (
-    <InstitutionContext.Provider value={data}>
-      <div className={className} style={data?.primary_color ? { "--primary": data.primary_color } : undefined}>
+    <InstitutionContext.Provider value={branding}>
+      <div className={className} style={branding?.primary_color ? { "--primary": branding.primary_color } : undefined}>
         {children}
       </div>
     </InstitutionContext.Provider>

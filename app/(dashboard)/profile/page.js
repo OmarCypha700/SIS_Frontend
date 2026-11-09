@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { hasRole, useAuth } from "@/components/auth/auth-provider";
+import { PasskeyCard } from "@/components/auth/passkey-card";
 import { PasswordCard } from "@/components/auth/password-card";
 import { DescriptionList, PageHeader } from "@/components/common";
 import { Field } from "@/components/forms/field";
@@ -51,6 +52,7 @@ export default function ProfilePage() {
       {hasRole(user, "STUDENT") ? <StudentContact /> : <StaffContact user={user} onSaved={reload} />}
       <NotificationSettings />
       <PasswordCard onChanged={reload} />
+      <PasskeyCard />
     </div>
   );
 }

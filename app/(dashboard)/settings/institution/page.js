@@ -1,5 +1,6 @@
 "use client";
 
+import { useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 import { Controller, useForm, useWatch } from "react-hook-form";
 import { Loader2 } from "lucide-react";
@@ -16,6 +17,7 @@ import { TranscriptImageField } from "@/components/transcripts/transcript-image-
 import { Textarea } from "@/components/ui/textarea";
 import { useApi } from "@/hooks/use-api";
 import { api, applyFieldErrors, errorMessage } from "@/lib/api";
+import { refreshBranding } from "@/lib/branding-client";
 
 const TEXT_FIELDS = [
   "name", "short_name", "motto", "email", "phone", "website", "physical_address", "postal_address", "country", "timezone",
@@ -39,6 +41,7 @@ const FLAGS = [
 
 export default function InstitutionSettingsPage() {
   const { reload: reloadShell } = useAuth();
+  const router = useRouter();
   const { data, error, loading, reload } = useApi("/institution/settings/");
   const { register, handleSubmit, reset, control, formState, setError } = useForm();
   const [shortName, studentFormat, serialFormat] = useWatch({
@@ -62,6 +65,10 @@ export default function InstitutionSettingsPage() {
       setLogo(null);
       reload();
       reloadShell();
+      // Refresh the server's short cache and this device's copy, so the change shows everywhere now.
+      await fetch("/branding/refresh", { method: "POST" }).catch(() => {});
+      await refreshBranding();
+      router.refresh();
     } catch (e) {
       const matched = applyFieldErrors(e, setError, [...TEXT_FIELDS, "logo", "online_payments_enabled"]);
       toast.error(matched ? "Please correct the highlighted fields." : errorMessage(e));

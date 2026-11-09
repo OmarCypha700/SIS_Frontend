@@ -1,15 +1,4 @@
-const backendUrl = (process.env.BACKEND_URL || "http://127.0.0.1:8000").replace(/\/$/, "");
-
-const FALLBACK = { name: "Student Information System", short_name: "SIS", primary_color: "#1d4ed8" };
-
-async function branding() {
-  try {
-    const response = await fetch(`${backendUrl}/api/v1/institution/`, { headers: { Accept: "application/json" } });
-    return response.ok ? { ...FALLBACK, ...(await response.json()) } : FALLBACK;
-  } catch {
-    return FALLBACK;
-  }
-}
+import { getBranding } from "@/lib/branding";
 
 // Bump when the icon drawing changes: installed apps only refresh their icon when its address changes.
 const ICON_VERSION = 2;
@@ -23,7 +12,8 @@ function icon(size, purpose = "any") {
 
 /** Web app manifest: makes the portal installable, branded with the institution's name, colour and logo. */
 export default async function manifest() {
-  const { name, short_name: shortName, primary_color: colour } = await branding();
+  const { name, short_name: shortName, primary_color: brand } = await getBranding();
+  const colour = brand || "#1d4ed8";
   const shortcut = (label, url) => ({ name: label, short_name: label, url, icons: [icon(96)] });
   return {
     id: "/",

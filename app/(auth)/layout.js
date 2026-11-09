@@ -9,9 +9,9 @@ export default function AuthLayout({ children }) {
     <AuthInstitutionProvider className="grid min-h-svh lg:grid-cols-2">
       <div className="flex flex-col justify-center px-6 py-12 sm:px-12">
         <div className="mx-auto w-full max-w-sm">
-          <Suspense fallback={<div className="mb-8 h-32 border-b pb-6 sm:h-36" />}>
-            <AuthBranding />
-          </Suspense>
+          {/* Not in its own Suspense boundary: it reads the branding provided above, and a boundary that
+              finished hydrating later would see that branding change mid-hydration (React error #418). */}
+          <AuthBranding />
           <Suspense>{children}</Suspense>
         </div>
       </div>

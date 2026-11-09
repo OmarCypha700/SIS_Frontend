@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { BadgeCheck, KeyRound, Loader2, Power, PowerOff, Trash2, Upload } from "lucide-react";
+import { BadgeCheck, KeyRound, Loader2, Power, PowerOff, TimerReset, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
 import { ConfirmDialog, StatusBadge } from "@/components/common";
@@ -115,6 +115,18 @@ function withoutBlankPassword(payload) {
 export default function UsersPage() {
   const [toggling, setToggling] = useState(null);
   const [passwordFor, setPasswordFor] = useState(null);
+
+  // After several wrong passwords, sign-in makes the person wait; this lets them try again now.
+  async function clearSignInDelay(user) {
+    try {
+      const { data } = await api.post(`/users/${user.id}/clear-sign-in-delay/`);
+      toast.success(data.was_waiting_seconds
+        ? `${user.full_name || user.email} can try to sign in again now.`
+        : `${user.full_name || user.email} was not waiting; nothing to clear.`);
+    } catch (error) {
+      toast.error(errorMessage(error));
+    }
+  }
   const [refreshPage, setRefreshPage] = useState(0);
   const [selected, setSelected] = useState([]);
   const [deleting, setDeleting] = useState(null);
@@ -160,6 +172,9 @@ export default function UsersPage() {
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setPasswordFor(row)}>
               <KeyRound /> Set temporary password
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => clearSignInDelay(row)}>
+              <TimerReset /> Clear sign-in delay
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setToggling(row)}>
               <Power /> {row.is_active ? "Disable account" : "Enable account"}

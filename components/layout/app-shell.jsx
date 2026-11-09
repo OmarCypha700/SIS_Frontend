@@ -28,6 +28,7 @@ import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip
 import { capacityLabel } from "@/lib/format";
 import { navForUser } from "@/lib/navigation";
 import { useInstallPrompt, useStandalone } from "@/lib/pwa";
+import { saveBranding } from "@/lib/branding-client";
 import { saveSidebarCollapsed } from "@/lib/sidebar";
 import { cn } from "@/lib/utils";
 
@@ -65,6 +66,12 @@ function ShellLayout({ children, initialCollapsed }) {
     window.addEventListener("keydown", onKeyDown);
     return () => window.removeEventListener("keydown", onKeyDown);
   }, [toggleRail]);
+
+  // Keep this device's copy of the branding current, so the next page (and the sign-in page) is
+  // drawn in the right colours and with the logo straight away.
+  useEffect(() => {
+    if (institution) saveBranding(institution);
+  }, [institution]);
 
   if (loading) return <ShellSkeleton />;
   if (error || !user) {

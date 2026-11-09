@@ -136,7 +136,7 @@ test("admin imports courses and staff accounts", async ({ page }) => {
   await open(page, "/login?next=%2F%5Cevil.example");
   await page.getByLabel("Email").fill("kwesi.new@northridge.example");
   await page.getByLabel("Password", { exact: true }).fill(temporary);
-  await page.getByRole("button", { name: "Sign in" }).click();
+  await page.getByRole("button", { name: "Sign in", exact: true }).click();
   await expect(page).toHaveURL(/\/dashboard/, { timeout: 30_000 });
   await expect(page.getByRole("heading", { name: "Welcome, Kwesi" })).toBeVisible();
   const blocked = await page.request.get("/api/v1/notifications/unread-count/");
