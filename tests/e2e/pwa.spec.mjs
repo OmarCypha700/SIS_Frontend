@@ -6,7 +6,10 @@ test("the portal is an installable app with an offline page", async ({ page, con
   const manifest = await (await page.request.get("/manifest.webmanifest")).json();
   expect(manifest.display).toBe("standalone");
   expect(manifest.start_url).toBe("/dashboard");
-  expect(manifest.name).toContain("Northridge");
+  // Installed, the app is called "<short name> Portal"; the full name is in the description.
+  expect(manifest.name).toBe("NCHT Portal");
+  expect(manifest.short_name).toBe("NCHT Portal");
+  expect(manifest.description).toContain("Northridge");
   expect(manifest.icons.some((icon) => icon.purpose === "maskable")).toBeTruthy();
   const icon = await page.request.get(manifest.icons[0].src);
   expect(icon.headers()["content-type"]).toBe("image/png");

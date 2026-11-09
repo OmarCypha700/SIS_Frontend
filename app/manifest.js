@@ -15,11 +15,14 @@ export default async function manifest() {
   const { name, short_name: shortName, primary_color: brand } = await getBranding();
   const colour = brand || "#1d4ed8";
   const shortcut = (label, url) => ({ name: label, short_name: label, url, icons: [icon(96)] });
+  // The installed app is called "<short name> Portal" (e.g. "CNMT Portal") on the home screen, in the
+  // app list and in the install prompt; the full name is in the description.
+  const appName = `${(shortName || "SIS").trim()} Portal`;
   return {
     id: "/",
-    name: `${name} – Student Portal`,
-    short_name: shortName,
-    description: "Student records, course registration and results.",
+    name: appName,
+    short_name: appName,
+    description: `${name}: student records, course registration and results.`,
     start_url: "/dashboard",
     scope: "/",
     display: "standalone",

@@ -22,11 +22,10 @@ const APPLE_SCREENS = [
 export const metadata = {
   title: { default: "Student Information System", template: "%s · SIS" },
   description: "Student records, course registration and results management.",
-  applicationName: "Student Portal",
   // iPhone/iPad: full-screen when added to the Home Screen, with the institution's icon and opening screen.
+  // No fixed title here: the Home Screen name then comes from the manifest ("<short name> Portal").
   appleWebApp: {
     capable: true,
-    title: "Student Portal",
     statusBarStyle: "default",
     startupImage: APPLE_SCREENS.map(([width, height, ratio]) => ({
       url: `/api/v1/institution/app-splash/?width=${width * ratio}&height=${height * ratio}`,
