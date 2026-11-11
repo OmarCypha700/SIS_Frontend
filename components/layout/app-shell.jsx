@@ -143,6 +143,7 @@ function ChooseOwnPassword({ user, institution, onChanged }) {
         <PasswordCard
           title="Choose your password"
           currentLabel="Temporary password"
+          offerSignOut={false}
           description="Use at least 10 characters that only you know. Avoid common words, personal details or only numbers."
           onChanged={onChanged}
         />

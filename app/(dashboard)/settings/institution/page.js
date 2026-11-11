@@ -24,7 +24,7 @@ const TEXT_FIELDS = [
   "primary_color", "academic_year_format", "student_number_format", "cgpa_retake_policy", "gpa_decimal_places", "result_slip_footer",
   "transcript_signatory_name", "transcript_signatory_title", "transcript_serial_format", "transcript_footer",
   "fee_billing_period", "registration_payment_percent", "payment_fee_percent", "payment_fee_cap",
-  "late_registration_penalty",
+  "late_registration_penalty", "student_session_days", "staff_session_hours",
 ];
 const FLAGS = [
   ["allow_higher_level_courses", "Students may register for courses above their level"],
@@ -234,6 +234,25 @@ export default function InstitutionSettingsPage() {
                   </div>
                 )}
               />
+            </CardContent>
+          </Card>
+          <Card>
+            <CardHeader>
+              <CardTitle>Sign-in</CardTitle>
+              <CardDescription>
+                Everyone is signed out after 8 hours without activity. However active they are, people must also sign in
+                again after these limits. Staff can change records and results, so their limit is shorter.
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="grid gap-4 sm:grid-cols-2">
+              <Field id="student_session_days" label="Students sign in again after (days)" error={errors.student_session_days?.message}
+                     hint="1 to 90 days.">
+                {(aria) => <Input type="number" min="1" max="90" step="1" {...aria} {...register("student_session_days")} />}
+              </Field>
+              <Field id="staff_session_hours" label="Staff sign in again after (hours)" error={errors.staff_session_hours?.message}
+                     hint="1 to 720 hours (30 days).">
+                {(aria) => <Input type="number" min="1" max="720" step="1" {...aria} {...register("staff_session_hours")} />}
+              </Field>
             </CardContent>
           </Card>
           <Card>

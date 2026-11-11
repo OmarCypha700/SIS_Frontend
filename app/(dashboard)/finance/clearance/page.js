@@ -7,6 +7,7 @@ import { toast } from "sonner";
 import { hasRole, useAuth } from "@/components/auth/auth-provider";
 import { PageHeader, RoleGate, StatCard, StatusBadge } from "@/components/common";
 import { Field } from "@/components/forms/field";
+import { BatchProgress } from "@/components/tables/bulk-actions";
 import { DataTable } from "@/components/tables/data-table";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import { Button } from "@/components/ui/button";
@@ -14,9 +15,10 @@ import { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, D
 import { Input } from "@/components/ui/input";
 import { useApi } from "@/hooks/use-api";
 import { api, errorMessage, fieldErrors } from "@/lib/api";
+import { BULK_BATCH, inBatches } from "@/lib/bulk";
 import { formatDateTime } from "@/lib/format";
 
-const students = (n) => `${n} student${n === 1 ? "" : "s"}`;
+const students = (n) => `${n.toLocaleString()} student${n === 1 ? "" : "s"}`;
 
 export default function FinancialClearancePage() {
   const { user } = useAuth();
@@ -95,6 +97,7 @@ export default function FinancialClearancePage() {
         selectedIds={selected}
         onSelectionChange={setSelected}
         rowLabel={(r) => `${r.student_number} ${r.full_name}`}
+        noun="student"
         pageSize={50}
         filters={[
           { key: "semester", label: "Semester (default: current)", endpoint: "/semesters/", optionLabel: (s) => `${s.academic_year_name} ${s.name}` },
@@ -151,16 +154,24 @@ function DecideDialog({ cleared, ids, semester, onClose, onDone }) {
   const [note, setNote] = useState("");
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const [progress, setProgress] = useState(0);
 
   async function save() {
     setPending(true);
     setError("");
+    setProgress(0);
+    const send = async (batch) =>
+      (await api.post("/financial-clearances/set/", { semester: Number(semester), students: batch, cleared, note })).data;
+    const report = (results) => {
+      const changed = results.reduce((sum, r) => sum + (r.changed ?? 0), 0);
+      toast.success(cleared ? `${students(changed)} cleared. They have been told they can register.` : `Clearance revoked for ${students(changed)}.`);
+    };
     try {
-      const { data } = await api.post("/financial-clearances/set/", { semester: Number(semester), students: ids, cleared, note });
-      toast.success(cleared ? `${students(data.changed)} cleared. They have been told they can register.` : `Clearance revoked for ${students(data.changed)}.`);
+      report(await inBatches(ids, send, setProgress));
       onDone();
     } catch (e) {
-      setError(fieldErrors(e).note || errorMessage(e));
+      if (e.results?.length) report(e.results);
+      setError(`${fieldErrors(e).note || errorMessage(e)}${e.results?.length ? ` (${students(e.remaining.length)} not processed)` : ""}`);
       setPending(false);
     }
   }
@@ -180,6 +191,9 @@ function DecideDialog({ cleared, ids, semester, onClose, onDone }) {
                hint={cleared ? "Optional: receipt number, payment plan or sponsor." : "Recorded in the audit log."}>
           <Input id="clearance-note" value={note} maxLength={255} onChange={(e) => setNote(e.target.value)} />
         </Field>
+        {pending && ids.length > BULK_BATCH && (
+          <BatchProgress label={cleared ? "Clearing" : "Revoking"} done={progress} total={ids.length} />
+        )}
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={pending}>
             Cancel

@@ -58,3 +58,53 @@ test("registrar can bulk change status but cannot delete", async ({ page }) => {
   await expect(bar.getByRole("button", { name: "Change status" })).toBeVisible();
   await expect(bar.getByRole("button", { name: "Delete" })).toHaveCount(0);
 });
+
+test("rows per page is remembered, and a selection can grow to every matching student", async ({ page }) => {
+  await login(page, ACCOUNTS.admin);
+  // 26 temporary students: one more than the first page holds. The test deletes them at the end.
+  const programme = (await apiGet(page, "/programmes/?page_size=1")).results[0];
+  const levels = await apiGet(page, "/levels/");
+  const level = (Array.isArray(levels) ? levels : levels.results).find((l) => l.name === "Level 100");
+  const token = await csrf(page);
+  for (let n = 1; n <= 26; n += 1) {
+    const created = await page.request.post("/api/v1/students/", {
+      headers: { "X-CSRFToken": token },
+      data: { first_name: "Paged", last_name: `Pagerow${n}`, email: `pagerow${n}@example.test`, programme: programme.id,
+              current_level: level.id, admission_year: 2026 },
+    });
+    expect(created.status()).toBe(201);
+  }
+
+  await open(page, "/students");
+  const perPage = page.getByLabel("Rows per page");
+  await expect(perPage).toHaveValue("25");
+  await page.getByLabel("Search").fill("Pagerow");
+  await expect(page.getByText("1–25 of 26")).toBeVisible(); // the search has applied
+
+  await page.getByRole("checkbox", { name: "Select all on this page" }).click();
+  await expect(page.getByText("All 25 students on this page are selected.")).toBeVisible();
+  await page.getByRole("button", { name: "Select all 26 students matching" }).click();
+  const bar = page.getByRole("region", { name: "Bulk actions" });
+  await expect(bar).toContainText("26 students selected");
+  await expect(page.getByText("All 26 students matching are selected.")).toBeVisible();
+  await page.getByRole("button", { name: "Clear selection" }).click();
+  await expect(bar).toHaveCount(0);
+
+  // A bigger page, kept on this device for this table.
+  await perPage.selectOption("50");
+  await expect(page.getByText("1–26 of 26")).toBeVisible();
+  await expect(page.getByRole("row")).toHaveCount(27);
+  await page.reload();
+  await expect(page.getByLabel("Rows per page")).toHaveValue("50");
+
+  // Clean up: all 26 at once.
+  await page.getByLabel("Search").fill("Pagerow");
+  await expect(page.getByText("1–26 of 26")).toBeVisible();
+  await page.getByRole("checkbox", { name: "Select all on this page" }).click();
+  await bar.getByRole("button", { name: "Delete" }).click();
+  const dialog = page.getByRole("dialog");
+  await dialog.getByLabel("Reason").fill("Test records");
+  await dialog.getByRole("checkbox").click();
+  await dialog.getByRole("button", { name: "Delete (26)" }).click();
+  await expect(page.getByText("26 students deleted.")).toBeVisible();
+});

@@ -13,9 +13,10 @@ async function send(page, method, url, data) {
 }
 
 test("the Accounts Office clears a student before they can register", async ({ page }) => {
-  // A student who has not registered this semester yet.
+  // A student who has not registered this semester yet and is not cleared (some demo students paid enough
+  // fees to be cleared automatically).
   await login(page, ACCOUNTS.registrar);
-  const waiting = (await apiGet(page, "/registrations/not-registered/?page_size=50")).results
+  const waiting = (await apiGet(page, "/registrations/not-registered/?cleared=false&page_size=50")).results
     .find((s) => s.email !== ACCOUNTS.student);
   test.skip(!waiting, "Every demo student is already registered");
 

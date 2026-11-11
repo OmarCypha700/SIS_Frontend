@@ -83,6 +83,7 @@ export default function StudentsPage() {
         selectedIds={selected}
         onSelectionChange={setSelected}
         rowLabel={(row) => `${row.student_number} ${row.full_name}`}
+        noun="student"
         refreshKey={refresh}
         filters={[
           { key: "programme", label: "Programme", endpoint: "/programmes/", optionLabel: (p) => p.code },

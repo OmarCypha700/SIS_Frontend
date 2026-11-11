@@ -88,6 +88,7 @@ export default function RegistrationsPage() {
         selectedIds={selected}
         onSelectionChange={setSelected}
         rowLabel={(r) => `${r.student_number} ${r.student_name}`}
+        noun="registration"
         filters={[
           { key: "semester", label: "Semester", endpoint: "/semesters/", optionLabel: (s) => `${s.academic_year_name} ${s.name}` },
           { key: "status", label: "Status", options: REGISTRATION_STATUS_OPTIONS },

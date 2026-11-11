@@ -14,12 +14,14 @@ import {
 import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { api, errorMessage } from "@/lib/api";
+import { BULK_BATCH, inBatches } from "@/lib/bulk";
 
 /**
  * Floating bar shown while rows are selected, with the actions that can be applied to all of them.
  *
  * actions: [{ value, label, icon, destructive?, needsStatus?, confirm: (n) => string, done: (n) => string }]
- * The server applies each record separately and lists any it skipped (with the reason).
+ * The server applies each record separately and lists any it skipped (with the reason). More than 500
+ * records are sent in batches of 500, with progress, and summed up in one summary at the end.
  */
 export function BulkActions({ endpoint, selectedIds, onClear, onDone, actions, statusOptions = [], noun = "record" }) {
   const [active, setActive] = useState(null);
@@ -36,7 +38,7 @@ export function BulkActions({ endpoint, selectedIds, onClear, onDone, actions, s
           className="sticky bottom-4 z-30 mx-auto mt-4 flex w-fit max-w-full flex-wrap items-center gap-2 rounded-xl border bg-background/95 p-2 pl-4 shadow-lg backdrop-blur"
         >
           <span className="text-sm font-medium tabular-nums">
-            {count} {noun}
+            {count.toLocaleString()} {noun}
             {count === 1 ? "" : "s"} selected
           </span>
           <Button variant="ghost" size="sm" onClick={onClear}>
@@ -86,19 +88,33 @@ function BulkDialog({ action, endpoint, ids, noun, statusOptions, onClose, onFin
   const [understood, setUnderstood] = useState(false);
   const [pending, setPending] = useState(false);
   const [error, setError] = useState("");
+  const [progress, setProgress] = useState(0);
   const ready = reason.trim() && (!action.needsStatus || status) && (!action.destructive || understood);
 
   async function submit() {
     setPending(true);
     setError("");
+    setProgress(0);
+    const send = async (batch) => (await api.post(endpoint, {
+      action: action.value, ids: batch, reason: reason.trim(), ...(action.needsStatus ? { status } : {}),
+    })).data;
+    const combine = (results) => ({
+      done: results.flatMap((r) => r.done ?? []),
+      skipped: results.flatMap((r) => r.skipped ?? []),
+    });
     try {
-      const { data } = await api.post(endpoint, {
-        action: action.value, ids, reason: reason.trim(), ...(action.needsStatus ? { status } : {}),
-      });
-      onFinished(data);
+      onFinished(combine(await inBatches(ids, send, setProgress)));
     } catch (e) {
-      setError(errorMessage(e));
-      setPending(false);
+      if (!e.results?.length) {
+        setError(errorMessage(e));
+        setPending(false);
+        return;
+      }
+      // Some batches went through: report them, and list the rest as skipped (still selected).
+      const outcome = combine(e.results);
+      const reasonText = `Not processed: ${errorMessage(e)}`;
+      outcome.skipped.push(...e.remaining.map((id) => ({ id, label: `#${id}`, reason: reasonText })));
+      onFinished(outcome);
     }
   }
 
@@ -146,6 +162,7 @@ function BulkDialog({ action, endpoint, ids, noun, statusOptions, onClose, onFin
               <AlertDescription>{error}</AlertDescription>
             </Alert>
           )}
+          {pending && ids.length > BULK_BATCH && <BatchProgress label={action.label} done={progress} total={ids.length} />}
         </div>
         <DialogFooter>
           <Button variant="outline" onClick={onClose} disabled={pending}>
@@ -153,11 +170,25 @@ function BulkDialog({ action, endpoint, ids, noun, statusOptions, onClose, onFin
           </Button>
           <Button variant={action.destructive ? "destructive" : "default"} onClick={submit} disabled={!ready || pending}>
             {pending && <Loader2 className="animate-spin" />}
-            {action.label} ({ids.length})
+            {action.label} ({ids.length.toLocaleString()})
           </Button>
         </DialogFooter>
       </DialogContent>
     </Dialog>
+  );
+}
+
+/** "Working… 500 of 1,236" with a bar, for requests sent in batches. */
+export function BatchProgress({ label, done, total }) {
+  return (
+    <div className="space-y-1.5" role="status">
+      <p className="text-sm text-muted-foreground tabular-nums">
+        {label}… {done.toLocaleString()} of {total.toLocaleString()}
+      </p>
+      <div className="h-1.5 overflow-hidden rounded-full bg-muted">
+        <div className="h-full bg-primary transition-[width]" style={{ width: `${(done / total) * 100}%` }} />
+      </div>
+    </div>
   );
 }
 

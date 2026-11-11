@@ -2,9 +2,10 @@
 
 import Link from "next/link";
 import { useState } from "react";
-import { BadgeCheck, KeyRound, Loader2, Power, PowerOff, TimerReset, Trash2, Upload } from "lucide-react";
+import { BadgeCheck, KeyRound, Loader2, LogOut, Power, PowerOff, TimerReset, Trash2, Upload } from "lucide-react";
 import { toast } from "sonner";
 
+import { SignOutEverywhereDialog } from "@/components/auth/sign-out-everywhere-dialog";
 import { ConfirmDialog, StatusBadge } from "@/components/common";
 import { Field } from "@/components/forms/field";
 import { ResourcePage } from "@/components/resource-page";
@@ -115,6 +116,7 @@ function withoutBlankPassword(payload) {
 export default function UsersPage() {
   const [toggling, setToggling] = useState(null);
   const [passwordFor, setPasswordFor] = useState(null);
+  const [signingOut, setSigningOut] = useState(null);
 
   // After several wrong passwords, sign-in makes the person wait; this lets them try again now.
   async function clearSignInDelay(user) {
@@ -150,6 +152,7 @@ export default function UsersPage() {
           selectedIds: selected,
           onSelectionChange: setSelected,
           rowLabel: (row) => row.full_name,
+          noun: "account",
         }}
         filters={[
           { key: "role", label: "Role", options: ROLE_OPTIONS },
@@ -175,6 +178,9 @@ export default function UsersPage() {
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => clearSignInDelay(row)}>
               <TimerReset /> Clear sign-in delay
+            </DropdownMenuItem>
+            <DropdownMenuItem onSelect={() => setSigningOut(row)}>
+              <LogOut /> Sign out everywhere
             </DropdownMenuItem>
             <DropdownMenuItem onSelect={() => setToggling(row)}>
               <Power /> {row.is_active ? "Disable account" : "Enable account"}
@@ -205,6 +211,12 @@ export default function UsersPage() {
             throw e;
           }
         }}
+      />
+      <SignOutEverywhereDialog
+        open={signingOut !== null}
+        onOpenChange={(open) => !open && setSigningOut(null)}
+        name={signingOut?.full_name || signingOut?.email}
+        endpoint={`/users/${signingOut?.id}/sign-out-everywhere/`}
       />
       {passwordFor && <SetPasswordDialog user={passwordFor} onClose={() => setPasswordFor(null)} />}
       {deleting && (

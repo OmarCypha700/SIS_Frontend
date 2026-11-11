@@ -8,6 +8,7 @@ import { Loader2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { hasRole, useAuth } from "@/components/auth/auth-provider";
+import { DevicesCard } from "@/components/auth/devices-card";
 import { PasskeyCard } from "@/components/auth/passkey-card";
 import { PasswordCard } from "@/components/auth/password-card";
 import { DescriptionList, PageHeader } from "@/components/common";
@@ -25,6 +26,7 @@ import { capacityLabel, formatDate, ROLE_LABELS } from "@/lib/format";
 
 export default function ProfilePage() {
   const { user, reload } = useAuth();
+  const [passwordChanges, setPasswordChanges] = useState(0);
   return (
     <div className="space-y-6">
       <PageHeader title="My account" description={`${user.full_name} · ${capacityLabel(user)}`} />
@@ -51,8 +53,14 @@ export default function ProfilePage() {
       </Card>
       {hasRole(user, "STUDENT") ? <StudentContact /> : <StaffContact user={user} onSaved={reload} />}
       <NotificationSettings />
-      <PasswordCard onChanged={reload} />
+      <PasswordCard
+        onChanged={() => {
+          reload();
+          setPasswordChanges((n) => n + 1);
+        }}
+      />
       <PasskeyCard />
+      <DevicesCard refreshKey={passwordChanges} />
     </div>
   );
 }

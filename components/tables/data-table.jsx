@@ -2,7 +2,8 @@
 
 import { useRouter } from "next/navigation";
 import { useEffect, useMemo, useState } from "react";
-import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Search } from "lucide-react";
+import { ArrowDown, ArrowUp, ArrowUpDown, ChevronLeft, ChevronRight, Loader2, Search } from "lucide-react";
+import { toast } from "sonner";
 
 import { EmptyState, ErrorState } from "@/components/common";
 import { NativeSelect } from "@/components/forms/field";
@@ -12,6 +13,7 @@ import { Input } from "@/components/ui/input";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { useApi, useDebounced } from "@/hooks/use-api";
+import { api, errorMessage } from "@/lib/api";
 import { cn } from "@/lib/utils";
 
 /**
@@ -21,15 +23,33 @@ import { cn } from "@/lib/utils";
  * filters: [{ key, label, options?: [{value,label}], endpoint?, optionValue?, optionLabel?, defaultValue?, type? }]
  *   type "date" shows a date picker instead of a list (the value is YYYY-MM-DD).
  * selectable: adds row checkboxes. `selectedIds` / `onSelectionChange(ids)` hold the selection, which
- *   is kept across pages and cleared when the search or filters change.
+ *   is kept across pages and cleared when the search or filters change. With a whole page selected, a bar
+ *   offers to select every record matching the search and filters (all pages), named with `noun`.
+ * pageSize is the starting page size; people can choose 25–200 rows per page, remembered per table on the device.
  */
+
+const PAGE_SIZES = [25, 50, 100, 200]; // the server allows at most 200 per page
+const MAX_SELECT_ALL = 10000;
+
+function savedPageSize(endpoint, fallback) {
+  if (typeof window === "undefined") return fallback;
+  try {
+    const value = Number(window.localStorage.getItem(`sis.pageSize:${endpoint}`));
+    return PAGE_SIZES.includes(value) ? value : fallback;
+  } catch {
+    return fallback;
+  }
+}
 export function DataTable({
   endpoint, columns, filters = [], params = {}, searchPlaceholder = "Search…", defaultOrdering, rowHref,
-  toolbar, refreshKey = 0, emptyTitle = "No records found", emptyDescription, pageSize = 25, onData,
-  searchable = true, selectable = false, selectedIds = [], onSelectionChange, rowLabel = (row) => row.id,
+  toolbar, refreshKey = 0, emptyTitle = "No records found", emptyDescription, pageSize: defaultPageSize = 25, onData,
+  searchable = true, selectable = false, selectedIds = [], onSelectionChange, rowLabel = (row) => row.id, noun = "record",
 }) {
   const router = useRouter();
   const [page, setPage] = useState(1);
+  // Only read on the device; the server renders the loading rows, so there is nothing to mismatch.
+  const [pageSize, setPageSize] = useState(() => savedPageSize(endpoint, defaultPageSize));
+  const [selectingAll, setSelectingAll] = useState(false);
   const [search, setSearch] = useState("");
   const [ordering, setOrdering] = useState(defaultOrdering);
   const [filterValues, setFilterValues] = useState(() =>
@@ -82,6 +102,40 @@ export function DataTable({
     if (selectable && selectedIds.length) onSelectionChange?.([]);
   }
 
+  function changePageSize(value) {
+    setPageSize(value);
+    setPage(1);
+    try {
+      window.localStorage.setItem(`sis.pageSize:${endpoint}`, String(value));
+    } catch {
+      // private mode: the choice lasts until the page is left
+    }
+  }
+
+  /** Every record matching the current search and filters, fetched page by page (200 at a time). */
+  async function selectAllMatching() {
+    setSelectingAll(true);
+    try {
+      const { page: _page, ...query } = apiParams;
+      const ids = [];
+      for (let next = 1; ; next += 1) {
+        const { data: chunk } = await api.get(endpoint, { params: { ...query, page: next, page_size: 200 } });
+        for (const row of chunk.results ?? []) ids.push(row.id);
+        if (next >= (chunk.total_pages ?? 1) || ids.length >= MAX_SELECT_ALL) break;
+      }
+      setSelection(new Set([...selectedIds, ...ids.slice(0, MAX_SELECT_ALL)]));
+    } catch (e) {
+      toast.error(errorMessage(e));
+    } finally {
+      setSelectingAll(false);
+    }
+  }
+
+  const count = data?.count ?? 0;
+  const plural = (n) => `${n.toLocaleString()} ${noun}${n === 1 ? "" : "s"}`;
+  const allMatchingSelected = count > 0 && selected.size >= count;
+  const offerSelectAll = selectable && headerState === true && count > pageIds.length && !loading;
+
   function toggleSort(key) {
     if (!key) return;
     setOrdering((current) => (current === key ? `-${key}` : current === `-${key}` ? undefined : key));
@@ -122,6 +176,32 @@ export function DataTable({
             ))}
           </div>
           {toolbar && <div className="flex flex-wrap gap-2 md:ml-auto">{toolbar}</div>}
+        </div>
+      )}
+      {offerSelectAll && (
+        <div role="status" className="flex flex-wrap items-center justify-center gap-x-2 gap-y-1 border-b bg-primary/5 px-3 py-2 text-center text-sm">
+          {allMatchingSelected ? (
+            <>
+              <span>All {plural(count)} matching are selected.</span>
+              <Button variant="link" size="sm" className="h-auto p-0" onClick={() => setSelection(new Set())}>
+                Clear selection
+              </Button>
+            </>
+          ) : (
+            <>
+              <span>
+                {selected.size === pageIds.length
+                  ? `All ${plural(pageIds.length)} on this page are selected.`
+                  : `${plural(selected.size)} selected.`}
+              </span>
+              <Button variant="link" size="sm" className="h-auto p-0" disabled={selectingAll} onClick={selectAllMatching}>
+                {selectingAll && <Loader2 className="animate-spin" />}
+                {count > MAX_SELECT_ALL
+                  ? `Select the first ${plural(MAX_SELECT_ALL)} matching`
+                  : `Select all ${plural(count)} matching`}
+              </Button>
+            </>
+          )}
         </div>
       )}
       <div className="overflow-x-auto">
@@ -207,9 +287,26 @@ export function DataTable({
       </div>
       {data && data.count > 0 && (
         <div className="flex flex-col items-center justify-between gap-2 border-t px-3 py-2 text-sm text-muted-foreground sm:flex-row">
-          <span>
-            {(data.page - 1) * data.page_size + 1}–{Math.min(data.page * data.page_size, data.count)} of {data.count}
-          </span>
+          <div className="flex items-center gap-3">
+            <span>
+              {(data.page - 1) * data.page_size + 1}–{Math.min(data.page * data.page_size, data.count)} of {data.count}
+            </span>
+            <label className="flex items-center gap-1.5">
+              <span className="hidden sm:inline">Rows per page</span>
+              <NativeSelect
+                value={String(pageSize)}
+                onChange={(e) => changePageSize(Number(e.target.value))}
+                aria-label="Rows per page"
+                className="h-8 w-auto"
+              >
+                {[...new Set([...PAGE_SIZES, defaultPageSize])].sort((a, b) => a - b).map((size) => (
+                  <option key={size} value={size}>
+                    {size}
+                  </option>
+                ))}
+              </NativeSelect>
+            </label>
+          </div>
           <div className="flex items-center gap-1">
             <Button variant="outline" size="icon-sm" disabled={page <= 1} onClick={() => setPage((p) => p - 1)} aria-label="Previous page">
               <ChevronLeft />

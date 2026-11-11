@@ -3,10 +3,11 @@
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useState } from "react";
-import { ArrowRightLeft, FileText, Loader2, Pencil, Power, Tag, Trash2 } from "lucide-react";
+import { ArrowRightLeft, FileText, Loader2, LogOut, Pencil, Power, Tag, Trash2 } from "lucide-react";
 import { toast } from "sonner";
 
 import { hasRole, useAuth } from "@/components/auth/auth-provider";
+import { SignOutEverywhereDialog } from "@/components/auth/sign-out-everywhere-dialog";
 import {
   ConfirmDialog, DescriptionList, EmptyState, ErrorState, LoadingBlock, PageHeader, RoleGate, StatusBadge,
 } from "@/components/common";
@@ -75,6 +76,11 @@ export default function StudentDetailPage() {
               <Button variant={student.is_active ? "destructive" : "outline"} onClick={() => setDialog("active")}>
                 <Power /> {student.is_active ? "Deactivate" : "Re-activate"}
               </Button>
+              {student.is_active && (
+                <Button variant="outline" onClick={() => setDialog("sign-out")}>
+                  <LogOut /> Sign out everywhere
+                </Button>
+              )}
               {isAdmin && (
                 <Button variant="ghost" className="text-destructive" onClick={() => setDialog("delete")}>
                   <Trash2 /> Delete
@@ -167,6 +173,12 @@ export default function StudentDetailPage() {
           )}
           <StatusDialog open={dialog === "status"} onOpenChange={(o) => !o && setDialog(null)} student={student} onSaved={setData} />
           <PlacementDialog open={dialog === "placement"} onOpenChange={(o) => !o && setDialog(null)} student={student} onSaved={setData} />
+          <SignOutEverywhereDialog
+            open={dialog === "sign-out"}
+            onOpenChange={(o) => !o && setDialog(null)}
+            name={student.full_name}
+            endpoint={`/students/${id}/sign-out-everywhere/`}
+          />
           <ConfirmDialog
             open={dialog === "active"}
             onOpenChange={(o) => !o && setDialog(null)}

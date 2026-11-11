@@ -17,6 +17,7 @@ const env = {
   DATABASE_URL: "",
   SQLITE_PATH: dbPath,
   THROTTLE_LOGIN: "1000/min",
+  THROTTLE_LOGIN_EMAIL: "1000/hour", // the suite signs the demo accounts in many times an hour
   CSRF_TRUSTED_ORIGINS: "http://localhost:3100,http://127.0.0.1:3100",
   DJANGO_DEBUG: "True",
   // Online fee payment against the fake gateway in fake-paystack.mjs, never the real Paystack.
