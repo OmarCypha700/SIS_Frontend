@@ -1,3 +1,5 @@
+import { connection } from "next/server";
+
 import { getBranding } from "@/lib/branding";
 
 // Bump when the icon drawing changes: installed apps only refresh their icon when its address changes.
@@ -12,6 +14,10 @@ function icon(size, purpose = "any") {
 
 /** Web app manifest: makes the portal installable, branded with the institution's name, colour and logo. */
 export default async function manifest() {
+  // Made on request, not once at deploy time: a deploy that could not reach the backend in time
+  // otherwise saved the default name ("SIS Portal") until the next refresh. The branding itself is
+  // still cached (lib/branding.js), so this rarely asks the backend.
+  await connection();
   const { name, short_name: shortName, primary_color: brand } = await getBranding();
   const colour = brand || "#1d4ed8";
   const shortcut = (label, url) => ({ name: label, short_name: label, url, icons: [icon(96)] });
